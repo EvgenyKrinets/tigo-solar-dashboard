@@ -163,9 +163,13 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.16**
+**v2.23.17**
 
 Recent improvements include:
+
+- automatically creates a Home Assistant Lovelace dashboard entry named Tigo Solar
+- the managed dashboard appears in Settings → Dashboards while the existing Tigo Solar sidebar panel remains unchanged
+- the generated dashboard uses the same full Tigo Solar interface through the custom card resource
 
 - click the date/range between the navigation arrows to open a native date picker
 - Day, Week and Year accept a directly selected calendar date; Month uses a month picker

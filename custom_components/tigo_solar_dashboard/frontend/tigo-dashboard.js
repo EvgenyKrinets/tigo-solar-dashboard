@@ -1,3 +1,5 @@
+const TIGO_FRONTEND_VERSION='2.23.10';
+const TIGO_PANEL_TAG='tigo-solar-panel-v2-23-10';
 class TigoSolarPanel extends HTMLElement {
   constructor() {
     super(); this.attachShadow({mode:'open'});
@@ -8,7 +10,7 @@ class TigoSolarPanel extends HTMLElement {
   set hass(value) { this._hass=value; if (!this.loaded) {this.loaded=true; this.init();} else this.updateLive(); }
   get hass(){return this._hass;}
   async call(type,extra={}){return this.hass.connection.sendMessagePromise({type:'tigo_dashboard/'+type,...extra});}
-  async init(){try {this.data=await this.call('get'); this.language=this.data.settings?.language||'ru'; this.ensureSettings(); this.loading=false; this.render(); if(!this.data.panels.length) await this.discover(false);}catch(e){this.loading=false;this.error(e);}}
+  async init(){try {this.data=await this.call('get');const serverVersion=this.data?._version;if(serverVersion&&serverVersion!==TIGO_FRONTEND_VERSION){const reloadKey='tigo-solar-reload-'+serverVersion;if(!sessionStorage.getItem(reloadKey)){sessionStorage.setItem(reloadKey,'1');window.location.reload();return;}}if(this.data&&'_version' in this.data)delete this.data._version; this.language=this.data.settings?.language||'ru'; this.ensureSettings(); this.loading=false; this.render(); if(this.hass.user?.is_admin)this.ensureWidgetResource().catch(()=>{}); if(!this.data.panels.length) await this.discover(false);}catch(e){this.loading=false;this.error(e);}}
   ensureSettings(){this.data.settings={markerSize:64,markerWidth:64,markerHeight:64,markerFields:['power'],gradient:true,gradientField:'power',gradientColor:'#10b981',gradientColorLow:'#1e3a8a',markerLayout:'vertical',mobileCompact:true,showPanelNames:true,stringStyles:{},panelStyles:{},barField:'none',barMin:0,barMax:500,rotateFields:false,rotateThreshold:3,rotateSeconds:4,summaryStrings:[],summaryMetrics:["power","temperature"],...(this.data.settings||{})};if(!Array.isArray(this.data.settings.summaryStrings))this.data.settings.summaryStrings=[];if(!Array.isArray(this.data.settings.summaryMetrics))this.data.settings.summaryMetrics=['power','temperature'];if(!Array.isArray(this.data.settings.markerFields))this.data.settings.markerFields=['power'];if(!this.data.settings.stringStyles||typeof this.data.settings.stringStyles!=='object')this.data.settings.stringStyles={};if(!this.data.settings.panelStyles||typeof this.data.settings.panelStyles!=='object')this.data.settings.panelStyles={};}
   t(ru,en,he){if(this.language==='ru')return ru;if(this.language==='he')return he||({'Карта крыши':'מפת הגג','Мощность':'הספק','Панели':'פאנלים','На связи':'מחובר','Строки':'מחרוזות','Все строки':'כל המחרוזות','Строка':'מחרוזת','панелей':'פאנלים','Мощность за 24 часа':'הספק ב־24 השעות האחרונות','Масштаб':'זום','Вся крыша':'כל הגג','Загрузить фото':'העלה תמונה','Редактировать расположение':'ערוך מיקום','Сохранить расположение':'שמור מיקום','Найти панели':'חפש פאנלים','Сохранено':'נשמר','Температура':'טמפרטורה','Энергия':'אנרגיה','Средняя температура':'טמפרטורה ממוצעת','Сейчас':'עכשיו','Ширина':'רוחב','Высота':'גובה','Все панели':'כל הפאנלים','Датчик':'חיישן','Минимум':'מינימום','Максимум':'מקסימום','Сохранить':'שמור','Редактирование':'עריכה'})[ru]||en;return en;}
   error(e){this.message=String(e?.message||e);this.render();}
@@ -78,10 +80,14 @@ class TigoSolarPanel extends HTMLElement {
       const error=modal.querySelector('.widgetError')||document.createElement('p');error.className='widgetError';error.textContent=this.t('Не удалось открыть Dashboard: ','Cannot open dashboard: ','לא ניתן לפתוח את לוח הבקרה: ')+String(e.message||e);modal.querySelector('.widgetActions').before(error);}
   }
   async ensureWidgetResource(){
-    const url='/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.0';
+    const url='/tigo_solar_dashboard/tigo-dashboard.js?v='+TIGO_FRONTEND_VERSION;
     const result=await this.hass.connection.sendMessagePromise({type:'lovelace/resources'});
     const resources=Array.isArray(result)?result:(result?.resources||[]);
-    if(resources.some(r=>String(r.url||'').startsWith('/tigo_solar_dashboard/tigo-dashboard.js')))return;
+    const existing=resources.find(r=>String(r.url||'').startsWith('/tigo_solar_dashboard/tigo-dashboard.js'));
+    if(existing){
+      if(existing.url!==url&&existing.id)await this.hass.connection.sendMessagePromise({type:'lovelace/resources/update',resource_id:existing.id,url,res_type:'module'});
+      return;
+    }
     await this.hass.connection.sendMessagePromise({type:'lovelace/resources/create',url,res_type:'module'});
   }
   async addWidgetToDashboard(){
@@ -476,7 +482,7 @@ ${this.viewMode==='roof'?':host{min-height:0}.app>.kpis,.app>.strings,.app>.main
       .mobileZoomOnly{display:none!important}
       @media (max-width:700px),(pointer:coarse){.mobileZoomOnly{display:flex!important}}
       .roofViewport{max-width:100%}
-      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.23.9</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
+      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.23.10</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
     ${this.message?`<div class="notice">${this.esc(this.message)}</div>`:''}
     <div class="kpis"><div class="tile"><label>${this.t('Мощность','Total power','הספק')}</label><strong id="total">${panels.length?this.fmt(sum/1000,2)+' kW':'—'}</strong></div><div class="tile"><label>${this.t('Панели','Panels','פאנלים')}</label><strong>${panels.length}</strong></div><div class="tile"><label>${this.t('На связи','Online','מחוברים')}</label><strong id="online">${online} / ${panels.length}</strong></div><div class="tile"><label>${this.t('Строки','Strings','סטרינגים')}</label><strong>${strings.length}</strong></div></div>
     <div class="strings compactStrings"><div class="string ${!this.summarySelection.strings.length&&!this.summarySelection.panels.length?'active':''}" data-filter="ALL" role="button" tabindex="0"><label>${this.t('Все строки','All strings','כל הסטרינגים')}</label><b>${panels.length} ${this.t('панелей','panels','פאנלים')}</b></div>${strings.map(s=>`<div class="string ${this.summarySelection.strings.includes(s)?'active':''}" data-filter="${this.esc(s)}" role="button" tabindex="0"><label>${this.t('Строка','String','סטרינג')} ${this.esc(s)}</label><b data-string-total="${this.esc(s)}">${this.fmt(panels.filter(p=>p.string===s).map(p=>this.num(p,'power')).filter(x=>x!==null).reduce((a,b)=>a+b,0)/1000,2)} kW</b><span class="muted">${panels.filter(p=>p.string===s).length} ${this.t('панелей','panels','פאנלים')}</span></div>`).join('')}</div>
@@ -490,7 +496,7 @@ ${this.editorOpen?`<div class="unifiedSave"><button class="btn primary" id="save
   }
   startDrag(e,el){if(!this.edit)return;e.preventDefault();const roof=this.shadowRoot.querySelector('#roof'),p=this.data.panels.find(p=>p.id===el.dataset.id);if(!p)return;el.setPointerCapture(e.pointerId);let moved=false;const move=ev=>{moved=true;const r=roof.getBoundingClientRect();p.x=Math.round(Math.max(2,Math.min(98,(ev.clientX-r.left)/r.width*100))*100)/100;p.y=Math.round(Math.max(3,Math.min(97,(ev.clientY-r.top)/r.height*100))*100)/100;el.style.left=p.x+'%';el.style.top=p.y+'%';};const end=()=>{el.removeEventListener('pointermove',move);el.removeEventListener('pointerup',end);el.removeEventListener('pointercancel',end);if(!moved)this.selected=p.id;this.drag=null;this.render();};el.addEventListener('pointermove',move);el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);this.drag=p.id;}
 }
-if(!customElements.get('tigo-solar-panel'))customElements.define('tigo-solar-panel',TigoSolarPanel);
+if(!customElements.get(TIGO_PANEL_TAG))customElements.define(TIGO_PANEL_TAG,TigoSolarPanel);
 
 // Optional independent Lovelace cards, backed by the same Tigo integration and settings.
 class TigoSolarCard extends TigoSolarPanel {

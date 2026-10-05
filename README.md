@@ -163,9 +163,13 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.18**
+**v2.23.19**
 
 Recent improvements include:
+
+- restored click-to-open Home Assistant graphs on every numeric metric tile in the selected-panel card
+- Power, voltages, currents, temperature, energy and RSSI are clickable again
+- optimizer serial remains informational only
 
 - fixed the managed Home Assistant dashboard configuration error from v2.23.17
 - added a dedicated full-dashboard custom card so stale cached card definitions cannot reject the generated configuration

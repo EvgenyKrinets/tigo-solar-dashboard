@@ -163,9 +163,13 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.10**
+**v2.23.11**
 
 Recent improvements include:
+
+- added an interactive 24-hour multi-series trend to each selected panel
+- toggle Power, Voltage, Current, Temperature, Energy and RSSI directly from the legend below the chart
+- multiple sensor curves can be displayed at the same time with hover/touch value inspection
 
 - automatic frontend cache-busting: future updates no longer require Ctrl+F5
 - Lovelace resource URL is automatically updated to the installed release

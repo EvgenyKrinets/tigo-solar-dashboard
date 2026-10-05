@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.8**
+**v2.23.9**
 
 Recent improvements include:
+
+- select multiple numeric sensors on a panel and open them together in Home Assistant History
 
 - fixed selected-panel metric clicks opening Home Assistant history
 

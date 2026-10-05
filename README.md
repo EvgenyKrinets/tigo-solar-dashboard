@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.5**
+**v2.23.6**
 
 Recent improvements include:
+
+- fixed statistics click handlers being lost during live sensor refreshes
 
 - native Home Assistant history/details opening from statistic tiles
 - improved desktop roof-image sizing

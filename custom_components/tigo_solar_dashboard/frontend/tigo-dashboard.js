@@ -1,16 +1,16 @@
-const TIGO_FRONTEND_VERSION='2.23.19';
-const TIGO_PANEL_TAG='tigo-solar-panel-v2-23-19';
+const TIGO_FRONTEND_VERSION='2.23.20';
+const TIGO_PANEL_TAG='tigo-solar-panel-v2-23-20';
 class TigoSolarPanel extends HTMLElement {
   constructor() {
     super(); this.attachShadow({mode:'open'});
     this.data={panels:[],roof:'',settings:{}}; this.selected=null; this.edit=false; this.loading=true;
-    this.history=[]; this.panelTrendSelection=['power']; this.panelTrendCache={}; this.panelTrendLoading=false; this.panelTrendError=''; this.panelTrendHover=null; this.panelTrendMode='day'; this.panelTrendAnchor=new Date(); this.panelTrendCustomStart=''; this.panelTrendCustomEnd=''; this.panelTrendRequest=0; this.busy=false; this.language='ru'; this.filter='ALL'; this.summarySelection={strings:[],panels:[]}; this.drag=null; this.settingsOpen=false; this.roofZoom=100; this.pinch=null; this.pan=null; this.displayScope='ALL'; this.displayTarget=''; this.editorOpen=false; this.carouselIndex=0; this.chartIndex=0; this.viewMode='all';this._onResize=()=>{this.fitRoofGeometry();requestAnimationFrame(()=>{this.fitRoofGeometry();this.fitMarkerText();});};window.addEventListener('resize',this._onResize);window.addEventListener('orientationchange',this._onResize);window.visualViewport?.addEventListener('resize',this._onResize);
+    this.history=[]; this.panelTrendSelection=['power']; this.panelTrendPanels=[]; this.panelTrendCache={}; this.panelTrendLoading=false; this.panelTrendError=''; this.panelTrendHover=null; this.panelTrendMode='day'; this.panelTrendAnchor=new Date(); this.panelTrendCustomStart=''; this.panelTrendCustomEnd=''; this.panelTrendRequest=0; this.busy=false; this.language='ru'; this.filter='ALL'; this.summarySelection={strings:[],panels:[]}; this.drag=null; this.settingsOpen=false; this.roofZoom=100; this.pinch=null; this.pan=null; this.displayScope='ALL'; this.displayTarget=''; this.editorOpen=false; this.carouselIndex=0; this.chartIndex=0; this.viewMode='all';this._onResize=()=>{this.fitRoofGeometry();requestAnimationFrame(()=>{this.fitRoofGeometry();this.fitMarkerText();});};window.addEventListener('resize',this._onResize);window.addEventListener('orientationchange',this._onResize);window.visualViewport?.addEventListener('resize',this._onResize);
   }
   disconnectedCallback(){window.removeEventListener('resize',this._onResize);window.removeEventListener('orientationchange',this._onResize);window.visualViewport?.removeEventListener('resize',this._onResize);clearInterval(this._rotationTimer);}
   set hass(value) { this._hass=value; if (!this.loaded) {this.loaded=true; this.init();} else this.updateLive(); }
   get hass(){return this._hass;}
   async call(type,extra={}){return this.hass.connection.sendMessagePromise({type:'tigo_dashboard/'+type,...extra});}
-  async init(){try {this.data=await this.call('get');if(this.data&&'_version' in this.data)delete this.data._version; this.language=this.data.settings?.language||'ru'; this.ensureSettings(); this.loading=false; const first=this.data.panels?.[0];if(first){const metric=this.panelTrendMetrics(first)[0]?.[0];this.panelTrendSelection=metric?[metric]:[];} this.render(); if(first)this.loadPanelTrend().catch(()=>{}); this.ensureManagedDashboard().catch(()=>{}); if(!this.data.panels.length) await this.discover(false);}catch(e){this.loading=false;this.error(e);}}
+  async init(){try {this.data=await this.call('get');if(this.data&&'_version' in this.data)delete this.data._version; this.language=this.data.settings?.language||'ru'; this.ensureSettings(); this.loading=false; const first=this.data.panels?.[0];if(first){const metric=this.panelTrendMetrics(first)[0]?.[0];this.panelTrendSelection=metric?[metric]:[];this.panelTrendPanels=[first.id];} this.render(); if(first)this.loadPanelTrend().catch(()=>{}); this.ensureManagedDashboard().catch(()=>{}); if(!this.data.panels.length) await this.discover(false);}catch(e){this.loading=false;this.error(e);}}
   ensureSettings(){this.data.settings={markerSize:64,markerWidth:64,markerHeight:64,markerFields:['power'],gradient:true,gradientField:'power',gradientColor:'#10b981',gradientColorLow:'#1e3a8a',markerLayout:'vertical',mobileCompact:true,showPanelNames:true,stringStyles:{},panelStyles:{},barField:'none',barMin:0,barMax:500,rotateFields:false,rotateThreshold:3,rotateSeconds:4,summaryStrings:[],summaryMetrics:["power","temperature"],...(this.data.settings||{})};if(!Array.isArray(this.data.settings.summaryStrings))this.data.settings.summaryStrings=[];if(!Array.isArray(this.data.settings.summaryMetrics))this.data.settings.summaryMetrics=['power','temperature'];if(!Array.isArray(this.data.settings.markerFields))this.data.settings.markerFields=['power'];if(!this.data.settings.stringStyles||typeof this.data.settings.stringStyles!=='object')this.data.settings.stringStyles={};if(!this.data.settings.panelStyles||typeof this.data.settings.panelStyles!=='object')this.data.settings.panelStyles={};}
   t(ru,en,he){if(this.language==='ru')return ru;if(this.language==='he')return he||({'Карта крыши':'מפת הגג','Мощность':'הספק','Панели':'פאנלים','На связи':'מחובר','Строки':'מחרוזות','Все строки':'כל המחרוזות','Строка':'מחרוזת','панелей':'פאנלים','Мощность за 24 часа':'הספק ב־24 השעות האחרונות','Масштаб':'זום','Вся крыша':'כל הגג','Загрузить фото':'העלה תמונה','Редактировать расположение':'ערוך מיקום','Сохранить расположение':'שמור מיקום','Найти панели':'חפש פאנלים','Сохранено':'נשמר','Температура':'טמפרטורה','Энергия':'אנרגיה','Средняя температура':'טמפרטורה ממוצעת','Сейчас':'עכשיו','Ширина':'רוחב','Высота':'גובה','Все панели':'כל הפאנלים','Датчик':'חיישן','Минимум':'מינימום','Максимум':'מקסימום','Сохранить':'שמור','Редактирование':'עריכה'})[ru]||en;return en;}
   error(e){this.message=String(e?.message||e);this.render();}
@@ -164,7 +164,7 @@ class TigoSolarPanel extends HTMLElement {
     }catch(e){const error=modal.querySelector('.widgetError')||document.createElement('p');error.className='widgetError';error.textContent=this.t('Не удалось добавить: ','Could not add: ','ההוספה נכשלה: ')+String(e.message||e);modal.querySelector('.widgetActions').before(error);btn.disabled=false;}
   }
   async upload(file){if(!file)return;if(file.size>8000000){this.message=this.t('Максимум 8 МБ','Maximum 8 MB','גודל הקובץ המרבי הוא 8 MB');this.render();return;}try{const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});const v=await this.call('upload_roof',{image:b64});this.data.roof=v.roof;this.message=this.t('Фото сохранено','Photo saved','תמונת הגג נשמרה');this.render();}catch(e){this.error(e);}}
-  async select(id){this.selected=id;this.history=[];const panel=this.data.panels.find(p=>p.id===id);const metric=this.panelTrendMetrics(panel)[0]?.[0];this.panelTrendSelection=metric?[metric]:[];this.panelTrendError='';this.render();this.loadPanelTrend().catch(()=>{});if(window.matchMedia('(max-width: 700px)').matches){this.shadowRoot.querySelector('.detail')?.scrollIntoView({behavior:'smooth',block:'start'});}}
+  async select(id){this.selected=id;this.history=[];const panel=this.data.panels.find(p=>p.id===id);const metric=this.panelTrendMetrics(panel)[0]?.[0];this.panelTrendSelection=metric?[metric]:[];this.panelTrendPanels=panel?[panel.id]:[];this.panelTrendError='';this.render();this.loadPanelTrend().catch(()=>{});if(window.matchMedia('(max-width: 700px)').matches){this.shadowRoot.querySelector('.detail')?.scrollIntoView({behavior:'smooth',block:'start'});}}
   async loadHistory(id){const p=this.data.panels.find(p=>p.id===id);const entity=p?.entities?.power;this.history=[];if(!entity){this.renderHistory();return;}try{const end=new Date(),start=new Date(end.getTime()-86400000);const url=`history/period/${start.toISOString()}?filter_entity_id=${encodeURIComponent(entity)}&end_time=${encodeURIComponent(end.toISOString())}&minimal_response&no_attributes`;const raw=await this.hass.callApi('GET',url);if(this.selected!==id)return;this.history=(raw?.[0]||[]).map(x=>({t:new Date(x.last_changed||x.last_updated).getTime(),v:Number(x.state)})).filter(x=>Number.isFinite(x.v)&&Number.isFinite(x.t));}catch(e){this.historyError=String(e.message||e);}this.renderHistory();}
   showPowerHistory(){
     const panel=this.data.panels.find(p=>p.id===this.selected);
@@ -364,6 +364,103 @@ class TigoSolarPanel extends HTMLElement {
       };
     });
   }
+  trendPanels(){
+    const ids=(this.panelTrendPanels||[]).filter(id=>this.data.panels.some(p=>p.id===id));
+    if(!ids.length){
+      const fallback=this.selected||this.data.panels[0]?.id;
+      if(fallback)this.panelTrendPanels=[fallback];
+    }
+    const selectedIds=new Set(this.panelTrendPanels||[]);
+    return this.data.panels.filter(p=>selectedIds.has(p.id));
+  }
+  trendPanelColor(panelId){
+    const palette=['#ff8c2a','#3b82f6','#14b8a6','#a855f7','#ef4444','#22c55e','#eab308','#ec4899','#06b6d4','#8b5cf6','#84cc16','#f97316'];
+    const index=Math.max(0,this.data.panels.findIndex(p=>p.id===panelId));
+    return palette[index%palette.length];
+  }
+  trendDash(key){
+    return ({power:'',voltage_in:'10 4',voltage_out:'4 3',current_in:'12 3 2 3',current_out:'7 3',temperature:'2 4',energy:'14 4',rssi:'6 2 1 2'})[key]||'';
+  }
+  trendPanelPicker(){
+    const selected=new Set((this.panelTrendPanels||[]).filter(Boolean));
+    const strings=[...new Set(this.data.panels.map(p=>p.string))].sort();
+    const names=[...selected];
+    const summary=names.length<=3?names.join(', '):names.slice(0,3).join(', ')+' +'+(names.length-3);
+    const groups=strings.map(st=>{
+      const items=this.data.panels.filter(p=>p.string===st).map(p=>'<label class="trendPanelChoice"><input type="checkbox" data-trend-panel="'+this.esc(p.id)+'" '+(selected.has(p.id)?'checked':'')+'><i style="--panel-color:'+this.trendPanelColor(p.id)+'"></i><span>'+this.esc(p.id)+'</span></label>').join('');
+      return '<div class="trendPanelGroup"><b>'+this.t('Строка','String','סטרינג')+' '+this.esc(st)+'</b><div>'+items+'</div></div>';
+    }).join('');
+    return '<details class="trendPanelPicker"><summary><span>'+this.t('Сравнить панели','Compare panels','השוואת פאנלים')+'</span><b id="trendPanelCount">'+selected.size+'</b><small id="trendPanelNames">'+this.esc(summary)+'</small></summary><div class="trendPanelPickerBody">'+groups+'</div></details>';
+  }
+  toggleTrendPanel(id,checked,input){
+    const set=new Set(this.panelTrendPanels||[]);
+    if(checked)set.add(id);else if(set.size>1)set.delete(id);else{if(input)input.checked=true;return;}
+    this.panelTrendPanels=[...set];
+    this.updateTrendPanelPicker();
+    this.loadPanelTrend().catch(()=>{});
+  }
+  updateTrendPanelPicker(){
+    const set=new Set(this.panelTrendPanels||[]);
+    const count=this.shadowRoot.querySelector('#trendPanelCount');if(count)count.textContent=String(set.size);
+    const names=this.shadowRoot.querySelector('#trendPanelNames');
+    if(names){
+      const arr=[...set];
+      names.textContent=arr.length<=3?arr.join(', '):arr.slice(0,3).join(', ')+' +'+(arr.length-3);
+    }
+    this.shadowRoot.querySelectorAll('[data-trend-panel]').forEach(el=>{el.checked=set.has(el.dataset.trendPanel);});
+  }
+  trendActiveSeries(){
+    const base=this.data.panels.find(p=>p.id===this.selected)||this.data.panels[0];
+    if(!base)return [];
+    const defs=this.panelTrendMetrics(base).filter(([key])=>this.panelTrendSelection.includes(key));
+    const panels=this.trendPanels();
+    const multiPanel=panels.length>1;
+    const result=[];
+    for(const panel of panels){
+      for(const [key,label,unit] of defs){
+        if(!panel.entities?.[key])continue;
+        result.push({
+          panelId:panel.id,key,label:(multiPanel?panel.id+' · ':'')+label,metricLabel:label,unit,
+          color:multiPanel?this.trendPanelColor(panel.id):this.trendColor(key),
+          dash:multiPanel?this.trendDash(key):'',
+          points:this.panelTrendCache[this.panelTrendCacheKey(panel.id,key)]||[]
+        });
+      }
+    }
+    return result;
+  }
+  downloadTrendBlob(blob,name){
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  exportTrendCsv(){
+    const series=this.trendActiveSeries().filter(x=>x.points.length);
+    if(!series.length)return;
+    const rows=[['timestamp','panel','metric','value','unit']];
+    for(const ser of series)for(const p of ser.points)rows.push([new Date(p.t).toISOString(),ser.panelId,ser.metricLabel,String(p.v),ser.unit]);
+    rows.splice(1,rows.length-1,...rows.slice(1).sort((a,b)=>a[0].localeCompare(b[0])||a[1].localeCompare(b[1])||a[2].localeCompare(b[2])));
+    const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+    this.downloadTrendBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),'tigo-trend-'+this.trendRangeKey().replace(/[^a-z0-9_-]+/gi,'-')+'.csv');
+  }
+  async exportTrendPng(){
+    const source=this.shadowRoot.querySelector('#panelTrendSvg');if(!source)return;
+    const clone=source.cloneNode(true);
+    clone.querySelector('#panelTrendCursor')?.remove();clone.querySelector('#panelTrendHit')?.remove();
+    clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width','1600');clone.setAttribute('height','432');
+    clone.querySelectorAll('.trendGrid').forEach(el=>{el.setAttribute('stroke','#d7dde5');el.setAttribute('stroke-width','1');});
+    clone.querySelectorAll('.trendAxis').forEach(el=>{el.setAttribute('fill','#667085');el.setAttribute('font-size','13');el.setAttribute('font-family','Arial, sans-serif');});
+    clone.querySelectorAll('.trendLine').forEach(el=>{el.setAttribute('fill','none');el.setAttribute('stroke-width','3');el.setAttribute('stroke-linejoin','round');el.setAttribute('stroke-linecap','round');});
+    const svgText=new XMLSerializer().serializeToString(clone),url=URL.createObjectURL(new Blob([svgText],{type:'image/svg+xml;charset=utf-8'}));
+    try{
+      const img=new Image();
+      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
+      const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=432;
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png',0.95));
+      if(blob)this.downloadTrendBlob(blob,'tigo-trend-'+this.trendRangeKey().replace(/[^a-z0-9_-]+/gi,'-')+'.png');
+    }finally{URL.revokeObjectURL(url);}
+  }
   panelTrendMetrics(panel){
     const defs=[
       ['power',this.t('Мощность','Power','הספק'),'W'],
@@ -518,7 +615,8 @@ class TigoSolarPanel extends HTMLElement {
     const nav='<div class="trendDateNav"><button type="button" class="trendNavBtn" id="trendPrev">‹</button><button type="button" class="trendRangeLabel trendRangeButton" id="trendRangeButton" '+(this.panelTrendMode==='lifetime'?'disabled':'')+' title="'+this.t('Выбрать дату','Choose date','בחירת תאריך')+'">'+this.esc(this.trendRangeLabel())+'</button>'+directPicker+'<button type="button" class="trendNavBtn" id="trendNext" '+(this.trendCanNext()?'':'disabled')+'>›</button></div>';
     let custom='';
     if(this.panelTrendMode==='custom')custom='<div class="trendCustomRange"><label>'+this.t('От','From','מ־')+' <input id="trendCustomFrom" type="date" max="'+this.esc(this.localDateInput(new Date()))+'" value="'+this.esc(this.panelTrendCustomStart)+'"></label><label>'+this.t('До','To','עד')+' <input id="trendCustomTo" type="date" max="'+this.esc(this.localDateInput(new Date()))+'" value="'+this.esc(this.panelTrendCustomEnd)+'"></label><button type="button" class="btn primary" id="trendCustomApply">'+this.t('Применить','Apply','החל')+'</button></div>';
-    return '<div class="trendToolbar">'+tabs+nav+'</div>'+custom;
+    const exportMenu='<details class="trendExportMenu"><summary title="'+this.t('Экспорт','Export','ייצוא')+'">⇩ '+this.t('Экспорт','Export','ייצוא')+'</summary><div><button type="button" id="trendExportCsv">CSV</button><button type="button" id="trendExportPng">PNG</button></div></details>';
+    return '<div class="trendToolbar">'+tabs+'<div class="trendToolbarRight">'+nav+exportMenu+'</div></div>'+custom+this.trendPanelPicker();
   }
   formatTrendTick(ts,span){
     const d=new Date(ts),locale=this.trendLocale();
@@ -537,24 +635,30 @@ class TigoSolarPanel extends HTMLElement {
   }
   panelTrendCacheKey(panelId,key){return panelId+'|'+this.trendRangeKey()+'|'+key;}
   async loadPanelTrend(keys=this.panelTrendSelection){
-    const panel=this.data.panels.find(p=>p.id===this.selected)||this.data.panels[0];
-    if(!panel){this.renderPanelTrend();return;}
-    const wanted=(keys||[]).filter(k=>panel.entities?.[k]);
-    const missing=wanted.filter(k=>!this.panelTrendCache[this.panelTrendCacheKey(panel.id,k)]);
-    if(!missing.length){this.renderPanelTrend();return;}
+    const panels=this.trendPanels();
+    if(!panels.length){this.renderPanelTrend();return;}
+    const jobs=[];
+    for(const panel of panels){
+      for(const key of (keys||[])){
+        if(!panel.entities?.[key])continue;
+        const cacheKey=this.panelTrendCacheKey(panel.id,key);
+        if(!this.panelTrendCache[cacheKey])jobs.push({panel,key,cacheKey});
+      }
+    }
+    if(!jobs.length){this.renderPanelTrend();return;}
     const bounds=this.trendRangeBounds(),start=bounds.start,end=bounds.end;
     if(start>=end){this.panelTrendError=this.t('Неверный диапазон дат','Invalid date range','טווח תאריכים לא תקין');this.renderPanelTrend();return;}
     const request=++this.panelTrendRequest,startMs=start.getTime(),endMs=end.getTime(),span=endMs-startMs;
     const maxPoints=span<=2*86400000?1200:span<=40*86400000?900:span<=400*86400000?750:600;
     this.panelTrendLoading=true;this.panelTrendError='';this.renderPanelTrend();
     try{
-      await Promise.all(missing.map(async key=>{
-        const entity=panel.entities[key];
+      await Promise.all(jobs.map(async job=>{
+        const entity=job.panel.entities[job.key];
         const url='history/period/'+start.toISOString()+'?filter_entity_id='+encodeURIComponent(entity)+'&end_time='+encodeURIComponent(end.toISOString())+'&minimal_response&no_attributes';
         const raw=await this.hass.callApi('GET',url);
         let points=(raw?.[0]||[]).map(x=>({t:new Date(x.last_changed||x.last_updated).getTime(),v:Number(x.state)})).filter(x=>Number.isFinite(x.t)&&Number.isFinite(x.v));
         points=points.map((p,i)=>i===0&&p.t<startMs?{t:startMs,v:p.v}:p).filter(p=>p.t>=startMs&&p.t<=endMs).sort((x,y)=>x.t-y.t);
-        this.panelTrendCache[this.panelTrendCacheKey(panel.id,key)]=this.downsampleTrend(points,startMs,endMs,maxPoints);
+        this.panelTrendCache[job.cacheKey]=this.downsampleTrend(points,startMs,endMs,maxPoints);
       }));
     }catch(e){if(request===this.panelTrendRequest)this.panelTrendError=String(e?.message||e);}
     if(request!==this.panelTrendRequest)return;
@@ -575,7 +679,10 @@ class TigoSolarPanel extends HTMLElement {
     const rangeButton=this.shadowRoot.querySelector('#trendRangeButton');if(rangeButton)rangeButton.onclick=()=>this.openTrendDatePicker();
     const directDate=this.shadowRoot.querySelector('#trendDirectDate');if(directDate)directDate.onchange=e=>this.applyDirectTrendDate(e.target.value);
     const apply=this.shadowRoot.querySelector('#trendCustomApply');if(apply)apply.onclick=()=>this.applyCustomTrendRange();
-    this.updatePanelTrendLegend();this.renderPanelTrend();
+    this.shadowRoot.querySelectorAll('[data-trend-panel]').forEach(el=>{el.onchange=()=>this.toggleTrendPanel(el.dataset.trendPanel,el.checked,el);});
+    const exportCsv=this.shadowRoot.querySelector('#trendExportCsv');if(exportCsv)exportCsv.onclick=()=>this.exportTrendCsv();
+    const exportPng=this.shadowRoot.querySelector('#trendExportPng');if(exportPng)exportPng.onclick=()=>this.exportTrendPng();
+    this.updatePanelTrendLegend();this.updateTrendPanelPicker();this.renderPanelTrend();
   }
   updatePanelTrendLegend(){
     const active=new Set(this.panelTrendSelection);
@@ -593,15 +700,13 @@ class TigoSolarPanel extends HTMLElement {
   }
   renderPanelTrend(){
     const host=this.shadowRoot.querySelector('#panelTrendChart');if(!host)return;
-    const panel=this.data.panels.find(p=>p.id===this.selected)||this.data.panels[0];
-    if(!panel){host.innerHTML='';return;}
-    const defs=this.panelTrendMetrics(panel);
-    const active=defs.filter(([key])=>this.panelTrendSelection.includes(key));
-    if(!active.length){
-      host.innerHTML=`<div class="trendEmpty">${this.t('Выбери датчики под графиком','Select sensors below the chart','בחרו חיישנים מתחת לגרף')}</div>`;
-      return;
+    const base=this.data.panels.find(p=>p.id===this.selected)||this.data.panels[0];
+    if(!base){host.innerHTML='';return;}
+    const activeMetrics=this.panelTrendMetrics(base).filter(([key])=>this.panelTrendSelection.includes(key));
+    if(!activeMetrics.length){
+      host.innerHTML=`<div class="trendEmpty">${this.t('Выбери датчики под графиком','Select sensors below the chart','בחרו חיישנים מתחת לגרף')}</div>`;return;
     }
-    const series=active.map(([key,label,unit])=>({key,label,unit,color:this.trendColor(key),points:this.panelTrendCache[this.panelTrendCacheKey(panel.id,key)]||[]}));
+    const series=this.trendActiveSeries();
     if(this.panelTrendLoading&&!series.some(x=>x.points.length)){
       host.innerHTML=`<div class="trendEmpty">${this.t('Загрузка истории…','Loading history…','טוען היסטוריה…')}</div>`;return;
     }
@@ -610,51 +715,41 @@ class TigoSolarPanel extends HTMLElement {
     }
     const valid=series.filter(x=>x.points.length);
     if(!valid.length){
-      host.innerHTML=`<div class="trendEmpty">${this.t('Для выбранных датчиков история недоступна','History is unavailable for the selected sensors','אין היסטוריה לחיישנים שנבחרו')}</div>`;return;
+      host.innerHTML=`<div class="trendEmpty">${this.t('Для выбранных панелей и датчиков история недоступна','History is unavailable for the selected panels and sensors','אין היסטוריה לפאנלים ולחיישנים שנבחרו')}</div>`;return;
     }
-    const bounds=this.trendRangeBounds();
-    const minT=bounds.start.getTime(),maxT=bounds.end.getTime(),span=Math.max(1,maxT-minT);
+    const bounds=this.trendRangeBounds(),minT=bounds.start.getTime(),maxT=bounds.end.getTime(),span=Math.max(1,maxT-minT);
     const W=1000,H=270,L=58,R=38,T=18,B=42,plotW=W-L-R,plotH=H-T-B;
-    const unitGroups={};
-    for(const ser of valid){
-      (unitGroups[ser.unit]??=[]).push(...ser.points.map(p=>p.v));
-    }
+    const unitGroups={};for(const ser of valid)(unitGroups[ser.unit]??=[]).push(...ser.points.map(p=>p.v));
     const scales={};
     for(const [unit,vals] of Object.entries(unitGroups)){
       let lo=Math.min(...vals),hi=Math.max(...vals);
-      if(lo===hi){const pad=Math.max(1,Math.abs(lo)*.05);lo-=pad;hi+=pad;}
-      else{const pad=(hi-lo)*.08;lo-=pad;hi+=pad;}
+      if(lo===hi){const pad=Math.max(1,Math.abs(lo)*.05);lo-=pad;hi+=pad;}else{const pad=(hi-lo)*.08;lo-=pad;hi+=pad;}
       scales[unit]={lo,hi};
     }
-    const unitList=Object.keys(scales);
-    const x=t=>L+(t-minT)/span*plotW;
-    const y=(v,u)=>T+(scales[u].hi-v)/(scales[u].hi-scales[u].lo)*plotH;
+    const unitList=Object.keys(scales),x=t=>L+(t-minT)/span*plotW,y=(v,u)=>T+(scales[u].hi-v)/(scales[u].hi-scales[u].lo)*plotH;
     const grid=[0,1,2,3,4].map(i=>{const yy=T+i*plotH/4;return `<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" class="trendGrid"/>`;}).join('');
     const firstUnit=unitList[0],secondUnit=unitList[1];
-    const leftLabels=firstUnit?[0,1,2,3,4].map(i=>{const v=scales[firstUnit].hi-i*(scales[firstUnit].hi-scales[firstUnit].lo)/4;const yy=T+i*plotH/4+4;return `<text x="${L-8}" y="${yy}" text-anchor="end" class="trendAxis">${this.fmt(v,1)}</text>`;}).join(''):'';
-    const rightLabels=secondUnit?[0,1,2,3,4].map(i=>{const v=scales[secondUnit].hi-i*(scales[secondUnit].hi-scales[secondUnit].lo)/4;const yy=T+i*plotH/4+4;return `<text x="${W-R+8}" y="${yy}" text-anchor="start" class="trendAxis">${this.fmt(v,1)}</text>`;}).join(''):'';
+    const leftLabels=firstUnit?[0,1,2,3,4].map(i=>{const v=scales[firstUnit].hi-i*(scales[firstUnit].hi-scales[firstUnit].lo)/4,yy=T+i*plotH/4+4;return `<text x="${L-8}" y="${yy}" text-anchor="end" class="trendAxis">${this.fmt(v,1)}</text>`;}).join(''):'';
+    const rightLabels=secondUnit?[0,1,2,3,4].map(i=>{const v=scales[secondUnit].hi-i*(scales[secondUnit].hi-scales[secondUnit].lo)/4,yy=T+i*plotH/4+4;return `<text x="${W-R+8}" y="${yy}" text-anchor="start" class="trendAxis">${this.fmt(v,1)}</text>`;}).join(''):'';
     const paths=valid.map(ser=>{
       const pts=ser.points.map(p=>`${x(p.t).toFixed(1)},${y(p.v,ser.unit).toFixed(1)}`).join(' ');
-      return `<polyline class="trendLine" data-trend-line="${ser.key}" fill="none" stroke="${ser.color}" points="${pts}"/>`;
+      const dash=ser.dash?` stroke-dasharray="${ser.dash}"`:'';
+      return `<polyline class="trendLine" data-trend-line="${this.esc(ser.panelId+'-'+ser.key)}" fill="none" stroke="${ser.color}"${dash} points="${pts}"/>`;
     }).join('');
-    const locale=this.language==='ru'?'ru-RU':this.language==='he'?'he-IL':'en-US';
     const ticks=[0,.25,.5,.75,1].map(frac=>{const ts=minT+span*frac;return `<text x="${x(ts)}" y="${H-12}" text-anchor="${frac===0?'start':frac===1?'end':'middle'}" class="trendAxis">${this.esc(this.formatTrendTick(ts,span))}</text>`;}).join('');
-    host.innerHTML=`<div class="trendCanvas"><svg id="panelTrendSvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="${this.t('Тренд панели','Panel trend','מגמת הפאנל')}">${grid}${leftLabels}${rightLabels}${paths}${ticks}<line id="panelTrendCursor" x1="0" y1="${T}" x2="0" y2="${T+plotH}" class="trendCursor" hidden/><rect id="panelTrendHit" x="${L}" y="${T}" width="${plotW}" height="${plotH}" fill="transparent"/></svg><div class="trendAxisTitles"><span>${this.esc(firstUnit||'')}</span><span>${this.esc(secondUnit||'')}</span></div></div><div id="panelTrendReadout" class="trendReadout">${unitList.length>2?this.t('Для 3+ единиц каждая серия масштабируется по своей шкале.','With 3+ units, each series uses its own scale.','ב־3 יחידות ומעלה כל סדרה משתמשת בסקאלה משלה.') : this.t('Наведи мышь на график для значений','Hover over the chart to inspect values','עברו עם העכבר על הגרף להצגת ערכים')}</div>`;
+    const panelLegend=this.trendPanels().length>1?`<div class="trendSeriesLegend">${this.trendPanels().map(p=>`<span><i style="--trend-color:${this.trendPanelColor(p.id)}"></i>${this.esc(p.id)}</span>`).join('')}</div>`:'';
+    host.innerHTML=`<div class="trendCanvas"><svg id="panelTrendSvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="${this.t('Тренд панелей','Panel trend','מגמת הפאנלים')}">${grid}${leftLabels}${rightLabels}${paths}${ticks}<line id="panelTrendCursor" x1="0" y1="${T}" x2="0" y2="${T+plotH}" class="trendCursor" hidden/><rect id="panelTrendHit" x="${L}" y="${T}" width="${plotW}" height="${plotH}" fill="transparent"/></svg><div class="trendAxisTitles"><span>${this.esc(firstUnit||'')}</span><span>${this.esc(secondUnit||'')}</span></div></div>${panelLegend}<div id="panelTrendReadout" class="trendReadout">${unitList.length>2?this.t('Для 3+ единиц каждая серия масштабируется по своей шкале.','With 3+ units, each series uses its own scale.','ב־3 יחידות ומעלה כל סדרה משתמשת בסקאלה משלה.') : this.t('Наведи мышь на график для значений','Hover over the chart to inspect values','עברו עם העכבר על הגרף להצגת ערכים')}</div>`;
     const svg=host.querySelector('#panelTrendSvg'),hit=host.querySelector('#panelTrendHit'),cursor=host.querySelector('#panelTrendCursor'),readout=host.querySelector('#panelTrendReadout');
     if(!svg||!hit||!cursor||!readout)return;
+    const locale=this.trendLocale();
     const inspect=ev=>{
-      const rect=svg.getBoundingClientRect();
-      const px=(ev.clientX-rect.left)/rect.width*W;
-      const clamped=Math.max(L,Math.min(W-R,px));
-      const ts=minT+(clamped-L)/plotW*span;
+      const rect=svg.getBoundingClientRect(),px=(ev.clientX-rect.left)/rect.width*W,clamped=Math.max(L,Math.min(W-R,px)),ts=minT+(clamped-L)/plotW*span;
       cursor.hidden=false;cursor.setAttribute('x1',clamped);cursor.setAttribute('x2',clamped);
-      const when=new Date(ts).toLocaleString(locale,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const when=new Date(ts).toLocaleString(locale,{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
       const values=valid.map(ser=>{const p=this.nearestTrendPoint(ser.points,ts);return p?`<span><i style="--trend-color:${ser.color}"></i><b>${this.esc(ser.label)}</b> ${this.fmt(p.v,1)} ${this.esc(ser.unit)}</span>`:'';}).join('');
       readout.innerHTML=`<strong>${when}</strong>${values}`;
     };
-    hit.addEventListener('pointermove',inspect);
-    hit.addEventListener('pointerdown',inspect);
-    hit.addEventListener('pointerleave',()=>{cursor.hidden=true;});
+    hit.addEventListener('pointermove',inspect);hit.addEventListener('pointerdown',inspect);hit.addEventListener('pointerleave',()=>{cursor.hidden=true;});
   }
   bindSummaryHistory(){
     this.shadowRoot.querySelectorAll('[data-summary-history]').forEach(el=>{
@@ -744,7 +839,7 @@ class TigoSolarPanel extends HTMLElement {
 .primary:hover{filter:brightness(1.1);background:var(--primary-color,#169778)}
 .danger{background:var(--error-color,#a54c53);color:var(--text-primary-color,#fff)}
 .reading,.displaySettings{background:var(--secondary-background-color,#14212d);border-color:var(--divider-color,#2b4052)}
-.summaryStat{display:block;width:100%;text-align:left;color:var(--primary-text-color);font:inherit;cursor:pointer}.panelTrend{margin-top:16px}.trendToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.trendPeriodTabs{display:flex;gap:3px;flex-wrap:wrap}.trendPeriodBtn,.trendNavBtn{border:1px solid var(--divider-color,#d8dde3);background:var(--card-background-color,#fff);color:var(--secondary-text-color,#6b7280);font:inherit;cursor:pointer}.trendPeriodBtn{padding:7px 12px;border-radius:7px}.trendPeriodBtn.active{color:var(--primary-text-color);border-color:var(--primary-color);box-shadow:inset 0 -2px 0 var(--primary-color)}.trendDateNav{display:flex;align-items:center;border:1px solid var(--divider-color,#d8dde3);border-radius:9px;overflow:hidden;background:var(--card-background-color,#fff)}.trendNavBtn{border:0;border-radius:0;padding:7px 11px;font-size:18px;line-height:1}.trendNavBtn:disabled{opacity:.3;cursor:default}.trendRangeLabel{min-width:190px;text-align:center;padding:7px 12px;font-weight:650;color:var(--primary-text-color);border:0;border-left:1px solid var(--divider-color,#d8dde3);border-right:1px solid var(--divider-color,#d8dde3);background:transparent;font:inherit}.trendRangeButton:not(:disabled){cursor:pointer}.trendRangeButton:not(:disabled):hover{background:color-mix(in srgb,var(--primary-color) 8%,transparent)}.trendRangeButton:disabled{cursor:default;opacity:1}.trendDirectDateInput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;clip-path:inset(50%)}.trendCustomRange{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:-2px 0 10px}.trendCustomRange label{display:flex;flex-direction:column;gap:4px;color:var(--secondary-text-color);font-size:11px}.trendCustomRange input{min-height:34px;padding:5px 8px;border:1px solid var(--divider-color,#d8dde3);border-radius:7px;background:var(--card-background-color,#fff);color:var(--primary-text-color)}@media(max-width:700px){.trendToolbar{align-items:stretch}.trendPeriodTabs{width:100%}.trendPeriodBtn{flex:1 1 auto;padding:7px 8px}.trendDateNav{width:100%}.trendRangeLabel{min-width:0;flex:1}.trendCustomRange label{flex:1 1 130px}.trendCustomRange input{width:100%}}.panelTrendTitle{font-size:15px;font-weight:750;margin-bottom:8px}.panelTrendChart{border:1px solid var(--divider-color,#d8dde3);border-radius:10px;background:var(--card-background-color,#fff);padding:6px;min-height:250px}.trendCanvas{position:relative}.panelTrendChart svg{display:block;width:100%;height:270px;overflow:visible}.trendGrid{stroke:var(--divider-color,#d8dde3);stroke-width:1}.trendAxis{fill:var(--secondary-text-color,#6b7280);font-size:11px}.trendLine{stroke-width:3;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}.trendCursor{stroke:var(--primary-text-color,#111827);stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;pointer-events:none}.trendAxisTitles{display:flex;justify-content:space-between;padding:0 10px;color:var(--secondary-text-color,#6b7280);font-size:11px}.trendReadout{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:34px;padding:7px 10px;color:var(--secondary-text-color,#6b7280);font-size:12px}.trendReadout strong{color:var(--primary-text-color)}.trendReadout span{display:inline-flex;align-items:center;gap:4px}.trendReadout i,.trendLegendBtn i{width:9px;height:9px;border-radius:50%;background:var(--trend-color);display:inline-block;flex:none}.trendEmpty{min-height:238px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--secondary-text-color,#6b7280);padding:20px}.panelTrendLegend{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:9px}.trendLegendBtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--divider-color,#d8dde3);border-radius:999px;padding:6px 10px;background:var(--card-background-color,#fff);color:var(--secondary-text-color,#6b7280);font:inherit;font-size:12px;cursor:pointer;opacity:.48}.trendLegendBtn.active{opacity:1;color:var(--primary-text-color);border-color:var(--trend-color);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--trend-color) 55%,transparent)}.trendLegendBtn small{font-size:10px;opacity:.7}.trendLegendBtn:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}@media(max-width:700px){.panelTrendChart svg{height:230px}.trendLegendBtn{padding:7px 9px}.panelTrendChart{min-height:218px}}.summaryStat:hover{border-color:var(--primary-color);filter:brightness(1.08)}.summaryStat:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}.summaryChartShade{position:fixed;inset:0;background:#0009;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}.summaryChartDialog{width:min(1000px,96vw);background:var(--card-background-color,#192632);border:1px solid var(--divider-color,#2d4052);border-radius:14px;padding:18px}.summaryChartDialog svg{width:100%;height:300px;margin-top:15px}.summaryChartHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.summaryStat{display:block;width:100%;text-align:left;color:var(--primary-text-color);font:inherit;cursor:pointer}.panelTrend{margin-top:16px}.trendToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.trendToolbarRight{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.trendPanelPicker{margin:0 0 10px;border:1px solid var(--divider-color,#d8dde3);border-radius:9px;background:var(--card-background-color,#fff)}.trendPanelPicker>summary{display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 11px;list-style:none}.trendPanelPicker>summary::-webkit-details-marker{display:none}.trendPanelPicker>summary b{min-width:24px;text-align:center;border-radius:999px;padding:2px 7px;background:var(--secondary-background-color,#eef2f6);color:var(--primary-text-color)}.trendPanelPicker>summary small{color:var(--secondary-text-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.trendPanelPickerBody{padding:8px 11px 11px;border-top:1px solid var(--divider-color,#d8dde3);max-height:230px;overflow:auto}.trendPanelGroup{margin:7px 0}.trendPanelGroup>b{font-size:12px}.trendPanelGroup>div{display:flex;gap:7px;flex-wrap:wrap;margin-top:5px}.trendPanelChoice{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid var(--divider-color,#d8dde3);border-radius:999px;cursor:pointer;font-size:12px}.trendPanelChoice i,.trendSeriesLegend i{width:9px;height:9px;border-radius:50%;background:var(--panel-color,var(--trend-color));display:inline-block;flex:none}.trendExportMenu{position:relative}.trendExportMenu>summary{list-style:none;cursor:pointer;border:1px solid var(--divider-color,#d8dde3);border-radius:8px;padding:7px 10px;color:var(--primary-text-color);background:var(--card-background-color,#fff)}.trendExportMenu>summary::-webkit-details-marker{display:none}.trendExportMenu>div{position:absolute;right:0;top:calc(100% + 5px);z-index:20;min-width:120px;padding:5px;background:var(--card-background-color,#fff);border:1px solid var(--divider-color,#d8dde3);border-radius:8px;box-shadow:0 8px 24px #0002}.trendExportMenu button{display:block;width:100%;text-align:left;padding:7px 9px;border:0;border-radius:6px;background:transparent;color:var(--primary-text-color);cursor:pointer}.trendExportMenu button:hover{background:var(--secondary-background-color,#eef2f6)}.trendSeriesLegend{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:5px 8px;color:var(--secondary-text-color);font-size:12px}.trendSeriesLegend span{display:inline-flex;align-items:center;gap:4px}.trendPeriodTabs{display:flex;gap:3px;flex-wrap:wrap}.trendPeriodBtn,.trendNavBtn{border:1px solid var(--divider-color,#d8dde3);background:var(--card-background-color,#fff);color:var(--secondary-text-color,#6b7280);font:inherit;cursor:pointer}.trendPeriodBtn{padding:7px 12px;border-radius:7px}.trendPeriodBtn.active{color:var(--primary-text-color);border-color:var(--primary-color);box-shadow:inset 0 -2px 0 var(--primary-color)}.trendDateNav{display:flex;align-items:center;border:1px solid var(--divider-color,#d8dde3);border-radius:9px;overflow:hidden;background:var(--card-background-color,#fff)}.trendNavBtn{border:0;border-radius:0;padding:7px 11px;font-size:18px;line-height:1}.trendNavBtn:disabled{opacity:.3;cursor:default}.trendRangeLabel{min-width:190px;text-align:center;padding:7px 12px;font-weight:650;color:var(--primary-text-color);border:0;border-left:1px solid var(--divider-color,#d8dde3);border-right:1px solid var(--divider-color,#d8dde3);background:transparent;font:inherit}.trendRangeButton:not(:disabled){cursor:pointer}.trendRangeButton:not(:disabled):hover{background:color-mix(in srgb,var(--primary-color) 8%,transparent)}.trendRangeButton:disabled{cursor:default;opacity:1}.trendDirectDateInput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;clip-path:inset(50%)}.trendCustomRange{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:-2px 0 10px}.trendCustomRange label{display:flex;flex-direction:column;gap:4px;color:var(--secondary-text-color);font-size:11px}.trendCustomRange input{min-height:34px;padding:5px 8px;border:1px solid var(--divider-color,#d8dde3);border-radius:7px;background:var(--card-background-color,#fff);color:var(--primary-text-color)}@media(max-width:700px){.trendToolbar{align-items:stretch}.trendToolbarRight{width:100%}.trendToolbarRight .trendDateNav{flex:1}.trendPeriodTabs{width:100%}.trendPeriodBtn{flex:1 1 auto;padding:7px 8px}.trendDateNav{width:100%}.trendRangeLabel{min-width:0;flex:1}.trendCustomRange label{flex:1 1 130px}.trendCustomRange input{width:100%}}.panelTrendTitle{font-size:15px;font-weight:750;margin-bottom:8px}.panelTrendChart{border:1px solid var(--divider-color,#d8dde3);border-radius:10px;background:var(--card-background-color,#fff);padding:6px;min-height:250px}.trendCanvas{position:relative}.panelTrendChart svg{display:block;width:100%;height:270px;overflow:visible}.trendGrid{stroke:var(--divider-color,#d8dde3);stroke-width:1}.trendAxis{fill:var(--secondary-text-color,#6b7280);font-size:11px}.trendLine{stroke-width:3;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}.trendCursor{stroke:var(--primary-text-color,#111827);stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;pointer-events:none}.trendAxisTitles{display:flex;justify-content:space-between;padding:0 10px;color:var(--secondary-text-color,#6b7280);font-size:11px}.trendReadout{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:34px;padding:7px 10px;color:var(--secondary-text-color,#6b7280);font-size:12px}.trendReadout strong{color:var(--primary-text-color)}.trendReadout span{display:inline-flex;align-items:center;gap:4px}.trendReadout i,.trendLegendBtn i{width:9px;height:9px;border-radius:50%;background:var(--trend-color);display:inline-block;flex:none}.trendEmpty{min-height:238px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--secondary-text-color,#6b7280);padding:20px}.panelTrendLegend{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:9px}.trendLegendBtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--divider-color,#d8dde3);border-radius:999px;padding:6px 10px;background:var(--card-background-color,#fff);color:var(--secondary-text-color,#6b7280);font:inherit;font-size:12px;cursor:pointer;opacity:.48}.trendLegendBtn.active{opacity:1;color:var(--primary-text-color);border-color:var(--trend-color);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--trend-color) 55%,transparent)}.trendLegendBtn small{font-size:10px;opacity:.7}.trendLegendBtn:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}@media(max-width:700px){.panelTrendChart svg{height:230px}.trendLegendBtn{padding:7px 9px}.panelTrendChart{min-height:218px}}.summaryStat:hover{border-color:var(--primary-color);filter:brightness(1.08)}.summaryStat:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}.summaryChartShade{position:fixed;inset:0;background:#0009;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}.summaryChartDialog{width:min(1000px,96vw);background:var(--card-background-color,#192632);border:1px solid var(--divider-color,#2d4052);border-radius:14px;padding:18px}.summaryChartDialog svg{width:100%;height:300px;margin-top:15px}.summaryChartHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .reading b{color:var(--primary-text-color,#e7edf5)}
 .roof,.roofViewport{background:var(--secondary-background-color,#111b25);border-color:var(--divider-color,#3b5365)}
 .notice{background:var(--secondary-background-color,#213e40);color:var(--primary-text-color,#e7edf5)}
@@ -803,7 +898,7 @@ ${this.viewMode==='roof'?':host{min-height:0}.app>.kpis,.app>.strings,.app>.main
       @media (max-width:1000px){.overviewRow{grid-template-columns:repeat(3,minmax(0,1fr))}}
       @media (max-width:700px),(pointer:coarse){.roofViewport{overscroll-behavior:contain!important;touch-action:none!important}}
       @media (max-width:700px){.overviewRow{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.overviewRow>.tile,.overviewRow>.string{padding:8px}}
-      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.23.19</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
+      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.23.20</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
     ${this.message?`<div class="notice">${this.esc(this.message)}</div>`:''}
     <div class="overviewRow" style="--overview-count:${3+strings.length}"><div class="tile overviewTile"><label>${this.t('Мощность','Total power','הספק')}</label><strong id="total">${panels.length?this.fmt(sum/1000,2)+' kW':'—'}</strong></div><div class="tile overviewTile"><label>${this.t('Панели онлайн','Panel Online','פאנלים מחוברים')}</label><strong id="online">${online} / ${panels.length}</strong></div><div class="string overviewString ${!this.summarySelection.strings.length&&!this.summarySelection.panels.length?'active':''}" data-filter="ALL" role="button" tabindex="0"><label>${this.t('Все строки','All strings','כל הסטרינגים')}</label><b>${panels.length} ${this.t('панелей','panels','פאנלים')}</b></div>${strings.map(s=>`<div class="string overviewString ${this.summarySelection.strings.includes(s)?'active':''}" data-filter="${this.esc(s)}" role="button" tabindex="0"><label>${this.t('Строка','String','סטרינג')} ${this.esc(s)}</label><b data-string-total="${this.esc(s)}">${this.fmt(panels.filter(p=>p.string===s).map(p=>this.num(p,'power')).filter(x=>x!==null).reduce((a,b)=>a+b,0)/1000,2)} kW</b><span class="muted">${panels.filter(p=>p.string===s).length} ${this.t('панелей','panels','פאנלים')}</span></div>`).join('')}</div>
     ${this.summaryDetail()}<div class="main"><section class="panel"><div class="sectionTitle">${this.t('Карта крыши','Roof layout','מפת הגג')}</div><div class="mobileTip">${this.t('Увеличивайте и уменьшайте карту кнопками или двумя пальцами. Масштабируются фото и панели вместе.','Zoom the roof with buttons or two fingers. The photo and markers scale together.','אפשר להגדיל ולהקטין באמצעות הכפתורים או בצביטה בשתי אצבעות. התמונה וסמני הפאנלים משתנים יחד.')}</div><div class="roofViewport"><div class="roof ${this.edit?'editing':''}" id="roof" style="--marker-size:${this.data.settings.markerSize}px;--roof-scale:${this.roofZoom/100};">${this.data.roof?`<img src="${this.esc(this.data.roof)}" alt="Roof">`:`<div class="empty">${this.t('Загрузите фотографию крыши или разместите панели на пустой схеме','Upload a roof photo or arrange panels on the blank layout','העלו תמונת גג או מקמו את הפאנלים על תרשים ריק')}</div>`}${visible.map((p,i)=>this.marker(p,panels.indexOf(p))).join('')}</div></div><div class="zoomControls mobileZoomOnly"><button class="btn" id="zoomOut" title="Zoom out">−</button><label>${this.t('Масштаб','Zoom','תקריב')} <input class="zoomPercent" id="zoomPercent" type="number" inputmode="numeric" min="50" max="500" step="5" value="${this.roofZoom}" aria-label="Roof zoom percent">%</label><button class="btn" id="zoomIn" title="Zoom in">+</button><button class="btn" id="zoomFit">${this.t('Вся крыша','Fit roof','התאמה לגג המלא')}</button><label class="compactToggle desktopOnly"><input type="checkbox" id="mobileCompact" ${this.data.settings.mobileCompact!==false?'checked':''}> ${this.t('Масштабировать маркеры с крышей','Scale markers with roof','שינוי גודל הסמנים יחד עם הגג')}</label></div><div class="editorMenu" ${this.editorOpen?'':'hidden'}><div class="actions"><button class="btn" id="discover">${this.t('Найти панели','Find panels','איתור פאנלים')}</button><button class="btn" id="addfound" ${this.found?.length?'':'disabled'}>${this.t('Добавить найденные','Add detected','הוספת הפאנלים שזוהו')} ${this.found?.length?'('+this.found.length+')':''}</button><button class="btn" id="add">+ ${this.t('Панель','Panel','פאנל')}</button><button class="btn" id="mapping" ${selected?'':'disabled'}>${this.t('Привязать датчик','Map sensor','שיוך חיישן')}</button><button class="btn danger" id="remove" ${selected?'':'disabled'}>${this.t('Удалить панель','Remove panel','מחיקת פאנל')}</button></div></div><div class="roofcontrols editorTools" ${this.editorOpen?'':'hidden'}><label class="btn file">📷 ${this.t('Загрузить фото','Upload photo','העלאת תמונה')}<input id="upload" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="actions"></div></div><div class="help">${this.edit?this.t('Перетаскивайте маркеры мышкой или пальцем. Позиция не меняет привязку к Tigo.','Drag markers with mouse or touch. Positions never change Tigo entity mapping.','גררו את סמני הפאנלים בעכבר או באצבע. שינוי המיקום אינו משנה את שיוך החיישנים.'):this.t('Нажмите на панель, чтобы увидеть её параметры.','Click a panel to see its details.','לחצו על פאנל להצגת הנתונים שלו.')}</div>
@@ -817,7 +912,7 @@ ${this.editorOpen?`<div class="unifiedSave"><button class="btn primary" id="save
   startDrag(e,el){if(!this.edit)return;e.preventDefault();const roof=this.shadowRoot.querySelector('#roof'),p=this.data.panels.find(p=>p.id===el.dataset.id);if(!p)return;el.setPointerCapture(e.pointerId);let moved=false;const move=ev=>{moved=true;const r=roof.getBoundingClientRect();p.x=Math.round(Math.max(2,Math.min(98,(ev.clientX-r.left)/r.width*100))*100)/100;p.y=Math.round(Math.max(3,Math.min(97,(ev.clientY-r.top)/r.height*100))*100)/100;el.style.left=p.x+'%';el.style.top=p.y+'%';};const end=()=>{el.removeEventListener('pointermove',move);el.removeEventListener('pointerup',end);el.removeEventListener('pointercancel',end);if(!moved)this.selected=p.id;this.drag=null;this.render();};el.addEventListener('pointermove',move);el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);this.drag=p.id;}
 }
 if(!customElements.get(TIGO_PANEL_TAG))customElements.define(TIGO_PANEL_TAG,TigoSolarPanel);
-for(const legacyTag of ['tigo-solar-panel','tigo-solar-panel-v2-23-10','tigo-solar-panel-v2-23-11','tigo-solar-panel-v2-23-12','tigo-solar-panel-v2-23-13','tigo-solar-panel-v2-23-14','tigo-solar-panel-v2-23-15','tigo-solar-panel-v2-23-16','tigo-solar-panel-v2-23-17','tigo-solar-panel-v2-23-18']){
+for(const legacyTag of ['tigo-solar-panel','tigo-solar-panel-v2-23-10','tigo-solar-panel-v2-23-11','tigo-solar-panel-v2-23-12','tigo-solar-panel-v2-23-13','tigo-solar-panel-v2-23-14','tigo-solar-panel-v2-23-15','tigo-solar-panel-v2-23-16','tigo-solar-panel-v2-23-17','tigo-solar-panel-v2-23-18','tigo-solar-panel-v2-23-19']){
   if(!customElements.get(legacyTag))customElements.define(legacyTag,class extends TigoSolarPanel{});
 }
 

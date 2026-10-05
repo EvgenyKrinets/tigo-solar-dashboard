@@ -163,9 +163,14 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.19**
+**v2.23.20**
 
 Recent improvements include:
+
+- compare multiple Tigo panels on the same trend graph
+- panel selector is grouped by string and keeps at least one panel selected
+- multi-panel comparison uses a distinct color per panel and line styles per metric
+- export the currently loaded trend as CSV data or PNG chart
 
 - restored click-to-open Home Assistant graphs on every numeric metric tile in the selected-panel card
 - Power, voltages, currents, temperature, energy and RSSI are clickable again

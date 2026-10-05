@@ -24,9 +24,9 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
     api.register(hass)
     panel_result = panel_custom.async_register_panel(
         hass,
-        webcomponent_name="tigo-solar-panel-v2-23-13",
+        webcomponent_name="tigo-solar-panel-v2-23-14",
         frontend_url_path="tigo-solar",
-        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.13",
+        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.14",
         sidebar_title="Tigo Solar",
         sidebar_icon="mdi:solar-panel-large",
         require_admin=False,

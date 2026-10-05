@@ -163,9 +163,14 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.14**
+**v2.23.15**
 
 Recent improvements include:
+
+- selectable panel trend periods: Day, Week, Month, Year, Lifetime and Custom
+- previous/next period navigation with the active date range shown above the chart
+- custom From/To date selection
+- automatic downsampling for longer periods to keep charts responsive
 
 - compact desktop overview: Total Power, Panel Online, All Strings and each string share one row
 - removed redundant Panels and Strings KPI tiles

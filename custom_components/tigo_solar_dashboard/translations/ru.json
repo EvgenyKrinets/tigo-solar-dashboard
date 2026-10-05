@@ -1,0 +1,1 @@
+{"config":{"step":{"user":{"title":"Tigo Solar Dashboard","description":"Добавить Tigo Solar в боковое меню Home Assistant. Датчики панелей и фотография крыши настраиваются в самом Dashboard."}},"abort":{"already_configured":"Tigo Solar Dashboard уже настроен."}}}

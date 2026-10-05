@@ -163,9 +163,13 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.15**
+**v2.23.16**
 
 Recent improvements include:
+
+- click the date/range between the navigation arrows to open a native date picker
+- Day, Week and Year accept a directly selected calendar date; Month uses a month picker
+- Custom keeps explicit From/To calendars with future dates blocked
 
 - selectable panel trend periods: Day, Week, Month, Year, Lifetime and Custom
 - previous/next period navigation with the active date range shown above the chart

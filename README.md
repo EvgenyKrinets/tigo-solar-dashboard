@@ -163,9 +163,12 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.12**
+**v2.23.13**
 
 Recent improvements include:
+
+- fixed the Home Assistant startup failure caused by the VERSION import introduced in v2.23.10
+- panel registration no longer depends on a separate VERSION constant
 
 - repaired the frontend loading regression introduced in v2.23.10
 - added compatibility panel tags so HACS can replace files safely before Home Assistant restarts

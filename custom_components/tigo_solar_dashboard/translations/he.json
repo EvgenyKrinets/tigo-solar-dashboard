@@ -1,0 +1,1 @@
+{"config":{"step":{"user":{"title":"לוח הבקרה Tigo Solar","description":"הוספת Tigo Solar לתפריט הצד של Home Assistant. ניתן להגדיר חיישני פאנלים ולהעלות תמונת גג מתוך לוח הבקרה."}},"abort":{"already_configured":"לוח הבקרה Tigo Solar כבר הוגדר."}}}

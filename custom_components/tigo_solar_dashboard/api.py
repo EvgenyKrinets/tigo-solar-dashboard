@@ -7,7 +7,7 @@ from pathlib import Path
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant
-from .const import DOMAIN, VERSION
+from .const import DOMAIN
 
 FIELDS = ("power", "voltage_in", "voltage_out", "current_in", "current_out", "temperature", "energy", "rssi", "duty_cycle", "timestamp", "node_serial", "gateway_address")
 PATTERN = re.compile(r"^sensor\.(?:tigotaptap|tigo)[_\-]([a-z]+[0-9]+)_(.+)$", re.I)
@@ -32,9 +32,7 @@ def register(hass: HomeAssistant):
 @websocket_api.websocket_command({vol.Required("type"): "tigo_dashboard/get"})
 @websocket_api.async_response
 async def get_config(hass, connection, msg):
-    payload = dict(hass.data[DOMAIN]["data"])
-    payload["_version"] = VERSION
-    connection.send_result(msg["id"], payload)
+    connection.send_result(msg["id"], hass.data[DOMAIN]["data"])
 
 @websocket_api.websocket_command({vol.Required("type"): "tigo_dashboard/discover"})
 @websocket_api.async_response

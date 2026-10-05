@@ -2,7 +2,7 @@
   "domain": "tigo_solar_dashboard",
   "name": "Tigo Solar Dashboard",
   "codeowners": ["@EvgenyKrinets"],
-  "version": "2.23.15",
+  "version": "2.23.16",
   "documentation": "https://github.com/EvgenyKrinets/tigo-solar-dashboard",
   "config_flow": true,
   "dependencies": ["frontend","panel_custom","http","websocket_api"],

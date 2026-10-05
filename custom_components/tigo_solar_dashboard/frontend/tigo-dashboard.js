@@ -300,32 +300,19 @@ class TigoSolarPanel extends HTMLElement {
   async showSummaryHistory(metric,stat){
     const panels=this.summaryPanels().filter(p=>p.entities?.[metric]);
     if(!panels.length)return;
-    const entityIds=panels.map(p=>p.entities[metric]);
-    const end=new Date(),start=new Date(end.getTime()-86400000);
-    try{
-      const url=`history/period/${start.toISOString()}?filter_entity_id=${encodeURIComponent(entityIds.join(','))}&end_time=${encodeURIComponent(end.toISOString())}&minimal_response&no_attributes`;
-      const raw=await this.hass.callApi('GET',url);
-      const series=(raw||[]).map((items,i)=>({id:panels[i]?.id||String(i+1),items:(items||[]).map(x=>({t:new Date(x.last_changed||x.last_updated).getTime(),v:Number(x.state)})).filter(x=>Number.isFinite(x.t)&&Number.isFinite(x.v))})).filter(x=>x.items.length);
-      if(!series.length)throw new Error(this.t('История недоступна','History unavailable','היסטוריה אינה זמינה'));
-      const times=[...new Set(series.flatMap(x=>x.items.map(v=>Math.floor(v.t/300000)*300000)))].sort((a,b)=>a-b);
-      const last=new Map(series.map(x=>[x.id,{i:0,v:null}]));
-      const points=[];
-      for(const t of times){
-        const vals=[];
-        for(const ser of series){const st=last.get(ser.id);while(st.i<ser.items.length&&ser.items[st.i].t<=t+299999){st.v=ser.items[st.i].v;st.i++;}if(st.v!==null)vals.push(st.v);}
-        if(vals.length){const v=stat==='min'?Math.min(...vals):stat==='max'?Math.max(...vals):vals.reduce((a,b)=>a+b,0)/vals.length;points.push({t,v});}
-      }
-      this.renderSummaryChart(metric,stat,points);
-    }catch(e){this.message=String(e.message||e);this.render();}
-  }
-  renderSummaryChart(metric,stat,points){
-    this.shadowRoot.querySelector('#summaryChartModal')?.remove();
-    const units={power:'W',temperature:'°C',voltage_in:'V',voltage_out:'V',current_in:'A',current_out:'A',energy:'kWh',rssi:'dBm'};
-    const names={min:this.t('Минимум','Minimum','מינימום'),max:this.t('Максимум','Maximum','מקסימום'),avg:this.t('Среднее','Average','ממוצע')};
-    const minT=points[0]?.t||0,maxT=points.at(-1)?.t||minT+1,minV=Math.min(...points.map(x=>x.v)),maxV=Math.max(...points.map(x=>x.v)),range=Math.max(.0001,maxV-minV);
-    const poly=points.map(x=>`${((x.t-minT)/(maxT-minT||1)*1000).toFixed(1)},${(180-(x.v-minV)/range*160).toFixed(1)}`).join(' ');
-    const modal=document.createElement('div');modal.id='summaryChartModal';modal.innerHTML=`<div class="summaryChartShade"><div class="summaryChartDialog" role="dialog" aria-modal="true"><div class="summaryChartHead"><div><b>${this.esc(this.fieldLabel(metric))} · ${names[stat]}</b><div class="muted">${this.t('Последние 24 часа','Last 24 hours','24 השעות האחרונות')}</div></div><button class="btn" id="summaryChartClose">✕</button></div><svg viewBox="0 0 1000 190" preserveAspectRatio="none"><line x1="0" y1="180" x2="1000" y2="180" stroke="var(--divider-color,#516478)"/><polyline fill="none" stroke="var(--primary-color,#34d399)" stroke-width="3" vector-effect="non-scaling-stroke" points="${poly}"/></svg><div class="chartlabels"><span>${this.fmt(minV,1)} ${units[metric]}</span><span>${this.fmt(maxV,1)} ${units[metric]}</span></div></div></div>`;
-    this.shadowRoot.appendChild(modal);modal.querySelector('#summaryChartClose').onclick=()=>modal.remove();modal.querySelector('.summaryChartShade').onclick=e=>{if(e.target===e.currentTarget)modal.remove();};
+    const values=panels.map(p=>({p,v:this.num(p,metric)})).filter(x=>x.v!==null);
+    if(!values.length)return;
+    let target;
+    if(stat==='min') target=values.reduce((a,b)=>b.v<a.v?b:a);
+    else if(stat==='max') target=values.reduce((a,b)=>b.v>a.v?b:a);
+    else {
+      const avg=values.reduce((a,b)=>a+b.v,0)/values.length;
+      target=values.reduce((a,b)=>Math.abs(b.v-avg)<Math.abs(a.v-avg)?b:a);
+    }
+    const entityId=target?.p?.entities?.[metric];
+    if(!entityId)return;
+    const ev=new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true});
+    this.dispatchEvent(ev);
   }
   summaryDetail(){
     const allStrings=[...new Set(this.data.panels.map(p=>p.string))].sort();
@@ -442,7 +429,7 @@ ${this.viewMode==='roof'?':host{min-height:0}.app>.kpis,.app>.strings,.app>.main
       .mobileZoomOnly{display:none!important}
       @media (max-width:700px),(pointer:coarse){.mobileZoomOnly{display:flex!important}}
       .roofViewport{max-width:100%}
-      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.22.0</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
+      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.23.3</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
     ${this.message?`<div class="notice">${this.esc(this.message)}</div>`:''}
     <div class="kpis"><div class="tile"><label>${this.t('Мощность','Total power','הספק')}</label><strong id="total">${panels.length?this.fmt(sum/1000,2)+' kW':'—'}</strong></div><div class="tile"><label>${this.t('Панели','Panels','פאנלים')}</label><strong>${panels.length}</strong></div><div class="tile"><label>${this.t('На связи','Online','מחוברים')}</label><strong id="online">${online} / ${panels.length}</strong></div><div class="tile"><label>${this.t('Строки','Strings','סטרינגים')}</label><strong>${strings.length}</strong></div></div>
     <div class="strings compactStrings"><div class="string ${!this.summarySelection.strings.length&&!this.summarySelection.panels.length?'active':''}" data-filter="ALL" role="button" tabindex="0"><label>${this.t('Все строки','All strings','כל הסטרינגים')}</label><b>${panels.length} ${this.t('панелей','panels','פאנלים')}</b></div>${strings.map(s=>`<div class="string ${this.summarySelection.strings.includes(s)?'active':''}" data-filter="${this.esc(s)}" role="button" tabindex="0"><label>${this.t('Строка','String','סטרינג')} ${this.esc(s)}</label><b data-string-total="${this.esc(s)}">${this.fmt(panels.filter(p=>p.string===s).map(p=>this.num(p,'power')).filter(x=>x!==null).reduce((a,b)=>a+b,0)/1000,2)} kW</b><span class="muted">${panels.filter(p=>p.string===s).length} ${this.t('панелей','panels','פאנלים')}</span></div>`).join('')}</div>

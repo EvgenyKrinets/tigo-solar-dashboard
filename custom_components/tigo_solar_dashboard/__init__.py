@@ -26,7 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
         hass,
         webcomponent_name="tigo-solar-panel",
         frontend_url_path="tigo-solar",
-        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.8",
+        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.9",
         sidebar_title="Tigo Solar",
         sidebar_icon="mdi:solar-panel-large",
         require_admin=False,

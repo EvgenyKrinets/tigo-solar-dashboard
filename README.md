@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.7**
+**v2.23.8**
 
 Recent improvements include:
+
+- fixed selected-panel metric clicks opening Home Assistant history
 
 - every selected-panel metric tile now opens its native Home Assistant entity history/details
 - removed the built-in 24-hour power chart from the selected-panel card

@@ -5,7 +5,7 @@ from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
-from .const import DOMAIN, STORAGE_VERSION, VERSION
+from .const import DOMAIN, STORAGE_VERSION
 from . import api
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -24,9 +24,9 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
     api.register(hass)
     panel_result = panel_custom.async_register_panel(
         hass,
-        webcomponent_name=f"tigo-solar-panel-v{VERSION.replace('.', '-')}",
+        webcomponent_name="tigo-solar-panel-v2-23-13",
         frontend_url_path="tigo-solar",
-        module_url=f"/tigo_solar_dashboard/tigo-dashboard.js?v={VERSION}",
+        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.13",
         sidebar_title="Tigo Solar",
         sidebar_icon="mdi:solar-panel-large",
         require_admin=False,

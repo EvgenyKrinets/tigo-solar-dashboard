@@ -1,7 +1,7 @@
 {
   "domain": "tigo_solar_dashboard",
   "name": "Tigo Solar Dashboard",
-  "version": "2.23.0",
+  "version": "2.23.1",
   "documentation": "https://github.com/EvgenyKrinets/tigo-solar-dashboard",
   "config_flow": true,
   "dependencies": ["frontend","panel_custom","http","websocket_api"],

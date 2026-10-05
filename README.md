@@ -163,9 +163,12 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.9**
+**v2.23.10**
 
 Recent improvements include:
+
+- automatic frontend cache-busting: future updates no longer require Ctrl+F5
+- Lovelace resource URL is automatically updated to the installed release
 
 - select multiple numeric sensors on a panel and open them together in Home Assistant History
 

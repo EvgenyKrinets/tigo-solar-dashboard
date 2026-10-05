@@ -1,0 +1,11 @@
+{
+  "domain": "tigo_solar_dashboard",
+  "name": "Tigo Solar Dashboard",
+  "version": "2.22.0",
+  "documentation": "https://github.com/EvgenyKrinets/tigo-solar-dashboard",
+  "config_flow": true,
+  "dependencies": ["frontend","panel_custom","http","websocket_api"],
+  "iot_class": "local_push",
+  "integration_type": "hub",
+  "issue_tracker": "https://github.com/EvgenyKrinets/tigo-solar-dashboard/issues"
+}

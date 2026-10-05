@@ -163,9 +163,13 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.13**
+**v2.23.14**
 
 Recent improvements include:
+
+- compact desktop overview: Total Power, Panel Online, All Strings and each string share one row
+- removed redundant Panels and Strings KPI tiles
+- mouse wheel now scrolls the Home Assistant page normally while hovering over the roof map
 
 - fixed the Home Assistant startup failure caused by the VERSION import introduced in v2.23.10
 - panel registration no longer depends on a separate VERSION constant

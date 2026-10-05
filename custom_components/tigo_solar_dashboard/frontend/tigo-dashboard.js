@@ -1,5 +1,5 @@
-const TIGO_FRONTEND_VERSION='2.23.17';
-const TIGO_PANEL_TAG='tigo-solar-panel-v2-23-17';
+const TIGO_FRONTEND_VERSION='2.23.18';
+const TIGO_PANEL_TAG='tigo-solar-panel-v2-23-18';
 class TigoSolarPanel extends HTMLElement {
   constructor() {
     super(); this.attachShadow({mode:'open'});
@@ -97,28 +97,42 @@ class TigoSolarPanel extends HTMLElement {
       const raw=await this.hass.connection.sendMessagePromise({type:'lovelace/dashboards/list'});
       const dashboards=Array.isArray(raw)?raw:(raw?.dashboards||[]);
       const urlPath='tigo-solar-dashboard';
-      if(dashboards.some(d=>d.url_path===urlPath))return;
-      await this.hass.connection.sendMessagePromise({
-        type:'lovelace/dashboards/create',
-        url_path:urlPath,
-        title:'Tigo Solar',
-        icon:'mdi:solar-panel-large',
-        show_in_sidebar:false,
-        require_admin:false
-      });
-      const config={
+      const managedConfig={
         title:'Tigo Solar',
         views:[{
           title:'Tigo Solar',
           path:'overview',
           icon:'mdi:solar-panel-large',
           panel:true,
-          cards:[{type:'custom:tigo-solar-card',view:'all',size:200}]
+          cards:[{type:'custom:tigo-solar-dashboard-card'}]
         }]
       };
-      await this.hass.connection.sendMessagePromise({type:'lovelace/config/save',url_path:urlPath,config});
+      const existing=dashboards.find(d=>d.url_path===urlPath);
+      if(!existing){
+        await this.hass.connection.sendMessagePromise({
+          type:'lovelace/dashboards/create',
+          url_path:urlPath,
+          title:'Tigo Solar',
+          icon:'mdi:solar-panel-large',
+          show_in_sidebar:false,
+          require_admin:false
+        });
+        await this.hass.connection.sendMessagePromise({type:'lovelace/config/save',url_path:urlPath,config:managedConfig});
+        return;
+      }
+      try{
+        const current=await this.hass.connection.sendMessagePromise({type:'lovelace/config',url_path:urlPath});
+        const first=current?.views?.[0]?.cards?.[0];
+        const isOldManaged=first?.type==='custom:tigo-solar-card'&&first?.view==='all';
+        const isNewManaged=first?.type==='custom:tigo-solar-dashboard-card';
+        if(isOldManaged&&!isNewManaged){
+          await this.hass.connection.sendMessagePromise({type:'lovelace/config/save',url_path:urlPath,config:managedConfig});
+        }
+      }catch(_){
+        await this.hass.connection.sendMessagePromise({type:'lovelace/config/save',url_path:urlPath,config:managedConfig});
+      }
     }catch(e){
-      console.warn('Tigo Solar: could not create managed Lovelace dashboard',e);
+      console.warn('Tigo Solar: could not create or migrate managed Lovelace dashboard',e);
     }
   }
   async addWidgetToDashboard(){
@@ -777,7 +791,7 @@ ${this.viewMode==='roof'?':host{min-height:0}.app>.kpis,.app>.strings,.app>.main
       @media (max-width:1000px){.overviewRow{grid-template-columns:repeat(3,minmax(0,1fr))}}
       @media (max-width:700px),(pointer:coarse){.roofViewport{overscroll-behavior:contain!important;touch-action:none!important}}
       @media (max-width:700px){.overviewRow{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.overviewRow>.tile,.overviewRow>.string{padding:8px}}
-      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.23.17</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
+      </style><div class="app" dir="${this.language==='he'?'rtl':'ltr'}"><div class="head"><div><h1>☀️ Tigo Solar <span class="version">v2.23.18</span></h1><div class="subtitle">${this.t('Мониторинг оптимизаторов Tigo','Tigo optimizer monitoring','ניטור אופטימייזרים של Tigo')}</div></div><div class="actions"><button class="btn" id="addWidgetGlobal" ${this.editorOpen?'':'hidden'}>${this.t('Добавить виджет на другой Dashboard','Add widget to another dashboard','הוספת כרטיס ללוח בקרה אחר')}</button><button class="btn" id="editorToggle">⚙ ${this.t('Редактирование','Edit','עריכה')}</button><div class="settings"><select id="language" aria-label="${this.t('Язык','Language','שפה')}"><option value="ru" ${this.language==='ru'?'selected':''}>RU</option><option value="en" ${this.language==='en'?'selected':''}>EN</option><option value="he" ${this.language==='he'?'selected':''}>HE</option></select></div></div></div>
     ${this.message?`<div class="notice">${this.esc(this.message)}</div>`:''}
     <div class="overviewRow" style="--overview-count:${3+strings.length}"><div class="tile overviewTile"><label>${this.t('Мощность','Total power','הספק')}</label><strong id="total">${panels.length?this.fmt(sum/1000,2)+' kW':'—'}</strong></div><div class="tile overviewTile"><label>${this.t('Панели онлайн','Panel Online','פאנלים מחוברים')}</label><strong id="online">${online} / ${panels.length}</strong></div><div class="string overviewString ${!this.summarySelection.strings.length&&!this.summarySelection.panels.length?'active':''}" data-filter="ALL" role="button" tabindex="0"><label>${this.t('Все строки','All strings','כל הסטרינגים')}</label><b>${panels.length} ${this.t('панелей','panels','פאנלים')}</b></div>${strings.map(s=>`<div class="string overviewString ${this.summarySelection.strings.includes(s)?'active':''}" data-filter="${this.esc(s)}" role="button" tabindex="0"><label>${this.t('Строка','String','סטרינג')} ${this.esc(s)}</label><b data-string-total="${this.esc(s)}">${this.fmt(panels.filter(p=>p.string===s).map(p=>this.num(p,'power')).filter(x=>x!==null).reduce((a,b)=>a+b,0)/1000,2)} kW</b><span class="muted">${panels.filter(p=>p.string===s).length} ${this.t('панелей','panels','פאנלים')}</span></div>`).join('')}</div>
     ${this.summaryDetail()}<div class="main"><section class="panel"><div class="sectionTitle">${this.t('Карта крыши','Roof layout','מפת הגג')}</div><div class="mobileTip">${this.t('Увеличивайте и уменьшайте карту кнопками или двумя пальцами. Масштабируются фото и панели вместе.','Zoom the roof with buttons or two fingers. The photo and markers scale together.','אפשר להגדיל ולהקטין באמצעות הכפתורים או בצביטה בשתי אצבעות. התמונה וסמני הפאנלים משתנים יחד.')}</div><div class="roofViewport"><div class="roof ${this.edit?'editing':''}" id="roof" style="--marker-size:${this.data.settings.markerSize}px;--roof-scale:${this.roofZoom/100};">${this.data.roof?`<img src="${this.esc(this.data.roof)}" alt="Roof">`:`<div class="empty">${this.t('Загрузите фотографию крыши или разместите панели на пустой схеме','Upload a roof photo or arrange panels on the blank layout','העלו תמונת גג או מקמו את הפאנלים על תרשים ריק')}</div>`}${visible.map((p,i)=>this.marker(p,panels.indexOf(p))).join('')}</div></div><div class="zoomControls mobileZoomOnly"><button class="btn" id="zoomOut" title="Zoom out">−</button><label>${this.t('Масштаб','Zoom','תקריב')} <input class="zoomPercent" id="zoomPercent" type="number" inputmode="numeric" min="50" max="500" step="5" value="${this.roofZoom}" aria-label="Roof zoom percent">%</label><button class="btn" id="zoomIn" title="Zoom in">+</button><button class="btn" id="zoomFit">${this.t('Вся крыша','Fit roof','התאמה לגג המלא')}</button><label class="compactToggle desktopOnly"><input type="checkbox" id="mobileCompact" ${this.data.settings.mobileCompact!==false?'checked':''}> ${this.t('Масштабировать маркеры с крышей','Scale markers with roof','שינוי גודל הסמנים יחד עם הגג')}</label></div><div class="editorMenu" ${this.editorOpen?'':'hidden'}><div class="actions"><button class="btn" id="discover">${this.t('Найти панели','Find panels','איתור פאנלים')}</button><button class="btn" id="addfound" ${this.found?.length?'':'disabled'}>${this.t('Добавить найденные','Add detected','הוספת הפאנלים שזוהו')} ${this.found?.length?'('+this.found.length+')':''}</button><button class="btn" id="add">+ ${this.t('Панель','Panel','פאנל')}</button><button class="btn" id="mapping" ${selected?'':'disabled'}>${this.t('Привязать датчик','Map sensor','שיוך חיישן')}</button><button class="btn danger" id="remove" ${selected?'':'disabled'}>${this.t('Удалить панель','Remove panel','מחיקת פאנל')}</button></div></div><div class="roofcontrols editorTools" ${this.editorOpen?'':'hidden'}><label class="btn file">📷 ${this.t('Загрузить фото','Upload photo','העלאת תמונה')}<input id="upload" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="actions"></div></div><div class="help">${this.edit?this.t('Перетаскивайте маркеры мышкой или пальцем. Позиция не меняет привязку к Tigo.','Drag markers with mouse or touch. Positions never change Tigo entity mapping.','גררו את סמני הפאנלים בעכבר או באצבע. שינוי המיקום אינו משנה את שיוך החיישנים.'):this.t('Нажмите на панель, чтобы увидеть её параметры.','Click a panel to see its details.','לחצו על פאנל להצגת הנתונים שלו.')}</div>
@@ -791,7 +805,7 @@ ${this.editorOpen?`<div class="unifiedSave"><button class="btn primary" id="save
   startDrag(e,el){if(!this.edit)return;e.preventDefault();const roof=this.shadowRoot.querySelector('#roof'),p=this.data.panels.find(p=>p.id===el.dataset.id);if(!p)return;el.setPointerCapture(e.pointerId);let moved=false;const move=ev=>{moved=true;const r=roof.getBoundingClientRect();p.x=Math.round(Math.max(2,Math.min(98,(ev.clientX-r.left)/r.width*100))*100)/100;p.y=Math.round(Math.max(3,Math.min(97,(ev.clientY-r.top)/r.height*100))*100)/100;el.style.left=p.x+'%';el.style.top=p.y+'%';};const end=()=>{el.removeEventListener('pointermove',move);el.removeEventListener('pointerup',end);el.removeEventListener('pointercancel',end);if(!moved)this.selected=p.id;this.drag=null;this.render();};el.addEventListener('pointermove',move);el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);this.drag=p.id;}
 }
 if(!customElements.get(TIGO_PANEL_TAG))customElements.define(TIGO_PANEL_TAG,TigoSolarPanel);
-for(const legacyTag of ['tigo-solar-panel','tigo-solar-panel-v2-23-10','tigo-solar-panel-v2-23-11','tigo-solar-panel-v2-23-12','tigo-solar-panel-v2-23-13','tigo-solar-panel-v2-23-14','tigo-solar-panel-v2-23-15','tigo-solar-panel-v2-23-16']){
+for(const legacyTag of ['tigo-solar-panel','tigo-solar-panel-v2-23-10','tigo-solar-panel-v2-23-11','tigo-solar-panel-v2-23-12','tigo-solar-panel-v2-23-13','tigo-solar-panel-v2-23-14','tigo-solar-panel-v2-23-15','tigo-solar-panel-v2-23-16','tigo-solar-panel-v2-23-17']){
   if(!customElements.get(legacyTag))customElements.define(legacyTag,class extends TigoSolarPanel{});
 }
 
@@ -858,11 +872,19 @@ class TigoSolarCardEditor extends HTMLElement {
     });
   }
 }
+class TigoSolarDashboardCard extends TigoSolarCard {
+  constructor(){super();this.cardConfig={view:'all',size:200};this.viewMode='all';}
+  setConfig(config){super.setConfig({...config,view:'all',size:200});}
+  static getStubConfig(){return {};}
+  getGridOptions(){return {columns:12,rows:12,min_columns:12,min_rows:8};}
+  getCardSize(){return 12;}
+}
 class TigoSolarWideRoofCard extends TigoSolarCard {
   constructor(){super();this.cardConfig={view:'roof-wide',size:100};this.viewMode='roof';}
   setConfig(config){super.setConfig({...config,view:'roof-wide'});}
   static getStubConfig(){return {view:'roof-wide',size:100};}
 }
+if(!customElements.get('tigo-solar-dashboard-card'))customElements.define('tigo-solar-dashboard-card',TigoSolarDashboardCard);
 if(!customElements.get('tigo-solar-roof-wide'))customElements.define('tigo-solar-roof-wide',TigoSolarWideRoofCard);
 if(!customElements.get('tigo-solar-card-editor'))customElements.define('tigo-solar-card-editor',TigoSolarCardEditor);
 if(!customElements.get('tigo-solar-card'))customElements.define('tigo-solar-card',TigoSolarCard);

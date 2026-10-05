@@ -163,9 +163,13 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.17**
+**v2.23.18**
 
 Recent improvements include:
+
+- fixed the managed Home Assistant dashboard configuration error from v2.23.17
+- added a dedicated full-dashboard custom card so stale cached card definitions cannot reject the generated configuration
+- automatically migrates the v2.23.17 generated dashboard to the corrected card
 
 - automatically creates a Home Assistant Lovelace dashboard entry named Tigo Solar
 - the managed dashboard appears in Settings → Dashboards while the existing Tigo Solar sidebar panel remains unchanged

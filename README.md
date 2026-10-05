@@ -163,9 +163,13 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.11**
+**v2.23.12**
 
 Recent improvements include:
+
+- repaired the frontend loading regression introduced in v2.23.10
+- added compatibility panel tags so HACS can replace files safely before Home Assistant restarts
+- kept the interactive multi-series 24-hour panel trend from v2.23.11
 
 - added an interactive 24-hour multi-series trend to each selected panel
 - toggle Power, Voltage, Current, Temperature, Energy and RSSI directly from the legend below the chart

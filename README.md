@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.24**
+**v2.23.25**
 
 Recent improvements include:
+
+- drag a rectangle on the roof to select a custom group of panels, no individual checkboxes needed
 
 - panel display settings now appear above statistics metric settings for immediate visual editing
 - selected panels and strings are outlined in yellow on the roof while editing, including free-form groups

@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.30**
+**v2.23.31**
 
 Recent improvements include:
+
+- readable 14px statistics labels for Minimum, Maximum and Average, with stronger selector specificity
 
 - additional Save button at the top of edit mode, with clear Saving feedback and elevated click target
 

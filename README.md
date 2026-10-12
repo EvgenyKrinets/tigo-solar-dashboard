@@ -163,9 +163,17 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.20**
+**v2.23.21**
 
 Recent improvements include:
+
+- trend axis now uses the dashboard font and a fixed -10 lower bound
+- trend hover reports No data instead of borrowing the nearest distant reading
+- visual keyboard Tab navigation follows the on-screen control order
+- CSV export rounds values to one decimal place
+- group/global size changes now override stale per-panel manual size overrides correctly
+- edit mode supports panel rotation, including a drag rotation handle
+- free-form panel groups can be selected independently of strings for shared size, rotation and layout changes
 
 - compare multiple Tigo panels on the same trend graph
 - panel selector is grouped by string and keeps at least one panel selected

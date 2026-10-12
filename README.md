@@ -163,9 +163,12 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.25**
+**v2.23.26**
 
 Recent improvements include:
+
+- adjust spacing between the selected custom group of roof panels with a live slider
+- larger, readable section headings in editor settings
 
 - drag a rectangle on the roof to select a custom group of panels, no individual checkboxes needed
 

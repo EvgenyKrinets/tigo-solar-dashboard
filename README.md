@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.29**
+**v2.23.30**
 
 Recent improvements include:
+
+- additional Save button at the top of edit mode, with clear Saving feedback and elevated click target
 
 - drag all panels in a selected free-form group together in Move group mode, preserving their relative positions and spacing
 

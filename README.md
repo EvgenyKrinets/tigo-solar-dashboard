@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.26**
+**v2.23.27**
 
 Recent improvements include:
+
+- custom-group spacing now lays out adjacent panels with equal edge-to-edge gaps instead of scaling their original offsets
 
 - adjust spacing between the selected custom group of roof panels with a live slider
 - larger, readable section headings in editor settings

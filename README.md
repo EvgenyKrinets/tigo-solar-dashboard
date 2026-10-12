@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.27**
+**v2.23.28**
 
 Recent improvements include:
+
+- drag all panels in a selected free-form group together in Move group mode, preserving their relative positions and spacing
 
 - custom-group spacing now lays out adjacent panels with equal edge-to-edge gaps instead of scaling their original offsets
 

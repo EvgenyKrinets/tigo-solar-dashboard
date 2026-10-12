@@ -163,9 +163,12 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.23**
+**v2.23.24**
 
 Recent improvements include:
+
+- panel display settings now appear above statistics metric settings for immediate visual editing
+- selected panels and strings are outlined in yellow on the roof while editing, including free-form groups
 
 - larger, consistent typography for trend controls, panel readings and compact overview labels
 

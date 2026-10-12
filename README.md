@@ -163,9 +163,11 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.21**
+**v2.23.22**
 
 Recent improvements include:
+
+- corrected stretched chart axis labels by preserving SVG aspect ratio and matching viewBox to chart width
 
 - trend axis now uses the dashboard font and a fixed -10 lower bound
 - trend hover reports No data instead of borrowing the nearest distant reading

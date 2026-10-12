@@ -163,7 +163,7 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.28**
+**v2.23.29**
 
 Recent improvements include:
 

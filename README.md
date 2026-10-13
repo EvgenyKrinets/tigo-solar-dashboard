@@ -163,9 +163,12 @@ Additional Tigo entities can remain available in Home Assistant even when they a
 
 ## Current release
 
-**v2.23.32**
+**v2.23.33**
 
 Recent improvements include:
+
+- Edit mode now replaces Edit with Save and Cancel at the top; no bottom Save button
+- Cancel restores the unsaved panel layout and settings snapshot
 
 - one Save changes button only; save clicks are handled consistently across dynamic re-renders
 

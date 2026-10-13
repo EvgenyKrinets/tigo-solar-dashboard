@@ -81,7 +81,6 @@ async def save(hass, connection, msg):
             return
         clean.append({"id":panel_id, "string":str(panel.get("string", "Other"))[:32], "entities":entities, "x":x, "y":y, "barEntity":bar_entity, "barMin":bar_min, "barMax":bar_max})
     current = hass.data[DOMAIN]["data"]
-    current["panels"] = clean
     if "settings" in msg:
         settings = msg["settings"]
         fields = settings.get("markerFields", ["power"])
@@ -96,6 +95,10 @@ async def save(hass, connection, msg):
         marker_height = settings.get("markerHeight", size)
         if any(isinstance(n, bool) or not isinstance(n, (int, float)) or not low <= n <= high for n, low, high in ((marker_width, 32, 220), (marker_height, 28, 180))):
             connection.send_error(msg["id"], "invalid", "Invalid marker dimensions")
+            return
+        marker_rotation = settings.get("markerRotation", 0)
+        if isinstance(marker_rotation, bool) or not isinstance(marker_rotation, (int, float)) or not math.isfinite(marker_rotation) or not -180 <= marker_rotation <= 180:
+            connection.send_error(msg["id"], "invalid", "Invalid marker rotation")
             return
         layout = settings.get("markerLayout", "vertical")
         if layout not in ("vertical", "horizontal"):
@@ -173,7 +176,8 @@ async def save(hass, connection, msg):
         if not isinstance(gradient_color_low, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", gradient_color_low):
             connection.send_error(msg["id"], "invalid", "Invalid low-end gradient color")
             return
-        current["settings"] = {"language": str(settings.get("language", "ru"))[:8] if settings.get("language") in ("ru", "en", "he") else "ru", "markerSize": int(size), "markerWidth": int(marker_width), "markerHeight": int(marker_height), "markerFields": fields, "gradient": settings.get("gradient", True) is True, "gradientField": gradient_field, "gradientColor": gradient_color, "gradientColorLow": gradient_color_low, "markerLayout": layout, "stringStyles": string_styles, "panelStyles": panel_styles, "mobileCompact": settings.get("mobileCompact", True) is True, "barField": bar_field, "barMin": bar_min, "barMax": bar_max, "rotateFields": settings.get("rotateFields", False) is True, "rotateSeconds": int(rotate_seconds), "rotateThreshold": rotate_threshold, "summaryMetrics": summary_metrics, "showPanelNames": settings.get("showPanelNames", True) is True}
+        current["settings"] = {"language": str(settings.get("language", "ru"))[:8] if settings.get("language") in ("ru", "en", "he") else "ru", "markerSize": int(size), "markerWidth": int(marker_width), "markerHeight": int(marker_height), "markerRotation": marker_rotation, "markerFields": fields, "gradient": settings.get("gradient", True) is True, "gradientField": gradient_field, "gradientColor": gradient_color, "gradientColorLow": gradient_color_low, "markerLayout": layout, "stringStyles": string_styles, "panelStyles": panel_styles, "mobileCompact": settings.get("mobileCompact", True) is True, "barField": bar_field, "barMin": bar_min, "barMax": bar_max, "rotateFields": settings.get("rotateFields", False) is True, "rotateSeconds": int(rotate_seconds), "rotateThreshold": rotate_threshold, "summaryMetrics": summary_metrics, "showPanelNames": settings.get("showPanelNames", True) is True}
+    current["panels"] = clean
     await hass.data[DOMAIN]["store"].async_save(current)
     connection.send_result(msg["id"], current)
 

@@ -1,12 +1,19 @@
 {
   "domain": "tigo_solar_dashboard",
   "name": "Tigo Solar Dashboard",
-  "codeowners": ["@EvgenyKrinets"],
-  "version": "2.23.33",
-  "documentation": "https://github.com/EvgenyKrinets/tigo-solar-dashboard",
+  "codeowners": [
+    "@EvgenyKrinets"
+  ],
   "config_flow": true,
-  "dependencies": ["frontend","panel_custom","http","websocket_api"],
-  "iot_class": "local_push",
+  "dependencies": [
+    "frontend",
+    "panel_custom",
+    "http",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/EvgenyKrinets/tigo-solar-dashboard",
   "integration_type": "hub",
-  "issue_tracker": "https://github.com/EvgenyKrinets/tigo-solar-dashboard/issues"
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/EvgenyKrinets/tigo-solar-dashboard/issues",
+  "version": "2.23.33"
 }

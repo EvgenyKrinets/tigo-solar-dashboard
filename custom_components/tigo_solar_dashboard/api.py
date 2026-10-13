@@ -108,7 +108,7 @@ async def save(hass, connection, msg):
             for key, style in value.items():
                 if not isinstance(key, str) or key not in allowed or not isinstance(style, dict):
                     return None
-                if set(style) - {"size", "width", "height", "layout"}:
+                if set(style) - {"size", "width", "height", "layout", "rotation"}:
                     return None
                 entry = {}
                 if "size" in style:
@@ -122,6 +122,11 @@ async def save(hass, connection, msg):
                         if isinstance(n, bool) or not isinstance(n, (int, float)) or not lower <= n <= upper:
                             return None
                         entry[dimension] = int(n)
+                if "rotation" in style:
+                    rotation = style["rotation"]
+                    if isinstance(rotation, bool) or not isinstance(rotation, (int, float)) or not math.isfinite(rotation) or not -180 <= rotation <= 180:
+                        return None
+                    entry["rotation"] = rotation
                 if "layout" in style:
                     if style["layout"] not in ("vertical", "horizontal"):
                         return None

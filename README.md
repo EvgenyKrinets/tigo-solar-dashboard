@@ -1,113 +1,48 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/EvgenyKrinets/tigo-solar-dashboard/main/custom_components/tigo_solar_dashboard/brand/logo.png" width="112" alt="Tigo Solar Dashboard">
+  <img src="custom_components/tigo_solar_dashboard/brand/logo.png" width="120" alt="Tigo Solar Dashboard logo">
 </p>
 
-<h1 align="center">Tigo Solar Dashboard</h1>
+<h1 align="center">Tigo Solar Dashboard for Home Assistant</h1>
 
 <p align="center">
-  A polished Home Assistant dashboard for visualizing Tigo optimizer data by panel and by string.
+  <strong>Interactive module-level solar monitoring for Tigo optimizers — on your own roof map.</strong><br>
+  Live panel metrics, multi-panel comparison, historical charts and visual array editing, all inside Home Assistant.
 </p>
 
 <p align="center">
-  <img alt="Release" src="https://img.shields.io/github/v/release/EvgenyKrinets/tigo-solar-dashboard?display_name=tag">
-  <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-2026.1%2B-41BDF5?logo=home-assistant&logoColor=white">
-  <img alt="HACS" src="https://img.shields.io/badge/HACS-Custom-41BDF5">
-  <img alt="Config Flow" src="https://img.shields.io/badge/Setup-UI%20Config%20Flow-success">
-  <img alt="Languages" src="https://img.shields.io/badge/Languages-RU%20%7C%20EN%20%7C%20HE-informational">
+  <a href="https://github.com/EvgenyKrinets/tigo-solar-dashboard/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/EvgenyKrinets/tigo-solar-dashboard"></a>
+  <a href="https://github.com/EvgenyKrinets/tigo-solar-dashboard/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/EvgenyKrinets/tigo-solar-dashboard"></a>
+  <img alt="Home Assistant integration" src="https://img.shields.io/badge/Home%20Assistant-custom%20integration-41BDF5">
+  <img alt="Languages" src="https://img.shields.io/badge/UI-Russian%20%7C%20English%20%7C%20Hebrew-blue">
 </p>
 
----
+> [!IMPORTANT]
+> **This integration visualizes existing Tigo optimizer entities; it does not communicate directly with optimizers or a Tigo gateway.** Add an integration or data source that provides Tigo entities to Home Assistant first.
 
-## Overview
+## What you can do
 
-**Tigo Solar Dashboard** turns existing Tigo optimizer sensor entities in Home Assistant into a visual solar-array dashboard.
-
-It automatically groups optimizer entities into panels and strings, provides live per-panel values, roof layout visualization, string summaries, selectable statistics, and native Home Assistant history access.
-
-> **Important:** this integration is the dashboard and visualization layer. It expects Tigo optimizer sensor entities to already exist in Home Assistant.
-
-## Highlights
-
-| Feature | What it does |
+| Feature | Description |
 | --- | --- |
-| **Automatic panel discovery** | Detects Tigo entities and groups them by panel ID and string |
-| **Roof layout** | Upload a roof image and place panels directly on it |
-| **Drag & resize** | Move and resize panel markers in edit mode |
-| **Live panel data** | Power, temperature, voltage, current, energy, RSSI and more |
-| **String overview** | Instant totals and panel counts for every string |
-| **Interactive statistics** | Minimum, maximum and average values for selected strings/panels |
-| **Home Assistant history** | Click statistics to open the native Home Assistant history/details view |
-| **Metric-based coloring** | Color panels by the selected metric using configurable low/high colors |
-| **Offline handling** | Offline and unavailable panels are visually distinguished |
-| **Desktop + mobile** | Responsive layout, with pinch zoom and panning on mobile |
-| **Multilingual UI** | Russian, English and Hebrew, including RTL support |
-| **UI-first configuration** | Designed to be configured from Home Assistant without manual YAML setup |
+| **Automatic discovery** | Organize existing Tigo entities by panel ID and string, with manual mapping when needed |
+| **Photo-based roof layout** | Upload a photo of your installation; drag, resize and rotate individual panel markers |
+| **Group editing** | Select panels by dragging a rectangle, highlight the selection, adjust spacing and move the group |
+| **Live monitoring** | Show power, temperature, input/output voltage, input/output current, energy and RSSI |
+| **Interactive panel statistics** | Compare minimum, maximum and average readings for selected strings/panels |
+| **Historical trends** | Display several metrics and several panels on the same chart, with period and date-range selection |
+| **Export** | Export loaded trend data as CSV or the rendered chart as PNG |
+| **Color visualization** | Apply a configurable metric-based gradient with offline/no-data indication |
+| **Home Assistant dashboard** | Open the dedicated Tigo Solar page or add widgets to Lovelace dashboards |
+| **Languages** | Russian, English and Hebrew (RTL) |
 
-## Dashboard views
+## Requirements
 
-### System overview
+- Home Assistant **2026.1 or newer**, as currently declared by this project's HACS metadata.
+- An existing source of Tigo optimizer sensors in Home Assistant.
+- HACS for simple installation and future updates (recommended).
 
-The header provides a quick live summary of the installation:
+### Supported entity naming
 
-- total PV power
-- total panel count
-- online panel count
-- detected string count
-
-Each string has its own compact summary card, and multiple strings can be selected for combined statistics.
-
-### Selected panel statistics
-
-Choose the metrics you want to see and the dashboard calculates:
-
-- **Minimum**
-- **Maximum**
-- **Average**
-
-for the currently selected panels or strings.
-
-Statistics can be opened directly into Home Assistant's native entity history/details dialog.
-
-### Roof map
-
-Use your own roof image as the background and position each optimizer exactly where the physical module is installed.
-
-Panel markers can display configurable values such as:
-
-- Power
-- Temperature
-- Voltage In / Out
-- Current In / Out
-- Energy
-- RSSI
-
-Panel colors can follow any supported metric using configurable low/high gradient colors. Offline modules remain clearly visible.
-
-## Installation
-
-### HACS
-
-1. Open **HACS** in Home Assistant.
-2. Add this repository as a **Custom repository** with category **Integration**:
-   `EvgenyKrinets/tigo-solar-dashboard`
-3. Download **Tigo Solar Dashboard**.
-4. Restart Home Assistant.
-5. Go to **Settings → Devices & services → Add integration**.
-6. Search for **Tigo Solar Dashboard**.
-
-Future versions are published as GitHub Releases and can be updated through HACS.
-
-### After an update
-
-After installing a new version:
-
-1. Restart Home Assistant if HACS requests it.
-2. Hard-refresh the browser (`Ctrl+F5`) if the dashboard still shows cached frontend content.
-3. On mobile, fully close and reopen the Home Assistant app if necessary.
-
-## Entity discovery
-
-The dashboard is designed for entity IDs following a panel/string structure, for example:
+Automatic discovery supports panel/string naming similar to:
 
 ```text
 sensor.tigotaptap_a01_power
@@ -120,155 +55,63 @@ sensor.tigotaptap_a01_energy
 sensor.tigotaptap_a01_rssi
 ```
 
-In this example:
+In this example, `A` identifies the string and `01` the panel. Panel counts and string counts are not fixed. Other source integrations may need manual entity mapping.
 
-- `A` = String A
-- `01` = Panel 01
+## Installation with HACS
 
-The dashboard is not limited to a fixed number of strings or panels.
+Until this project is accepted into HACS's default catalog, add it as a custom integration repository:
 
-## Configuration
+1. Open **HACS** in Home Assistant.
+2. Open the HACS custom repositories menu.
+3. Enter `https://github.com/EvgenyKrinets/tigo-solar-dashboard` and choose **Integration**.
+4. Install **Tigo Solar Dashboard** and restart Home Assistant.
+5. Open **Settings → Devices & services → Add integration**, then search for **Tigo Solar Dashboard**.
+6. Open **Tigo Solar** from Home Assistant's sidebar.
 
-Configuration is stored by the integration and edited directly from the dashboard.
+If HACS later accepts the project into its default catalog, the custom-repository step will no longer be needed for new users.
 
-You can configure:
+## Getting started
 
-- discovered/manual panel mappings
-- roof image
-- panel position and size
-- marker orientation and fields
-- marker display mode
-- statistics metrics
-- color-gradient metric
-- low/high colors
-- language
-- per-string and per-panel display overrides
+1. Ensure your Tigo sensor entities already update in Home Assistant.
+2. Open Tigo Solar and discover available panels.
+3. Enter **Edit** mode and upload a roof photo if desired.
+4. Drag panels into the correct locations. Configure marker size, rotation, displayed metrics and coloring.
+5. For group changes, select **Custom group**, drag a selection rectangle on the roof, then adjust or move the group.
+6. Choose **Save** to commit changes or **Cancel** to discard unsaved edits.
 
-Use **Edit** mode for layout changes, then save the complete dashboard configuration.
+### History and comparison
 
-## Supported metrics
+Select a panel and use the Trend section to choose one or more metrics. Add several panels to compare their data on the same timeline. Available period controls include Day, Week, Month, Year and a custom date range. Click a metric card for Home Assistant's native entity history dialog. Use **Export → CSV/PNG** to save the displayed trend.
 
-| Metric | Typical unit |
-| --- | --- |
-| Power | W |
-| Temperature | °C |
-| Voltage In | V |
-| Voltage Out | V |
-| Current In | A |
-| Current Out | A |
-| Energy | kWh |
-| RSSI | dBm |
+> Historical availability depends on your Home Assistant Recorder configuration and retained data. For long date ranges, the dashboard reduces displayed sample density; it cannot recover data that Recorder no longer stores.
 
-Additional Tigo entities can remain available in Home Assistant even when they are not displayed on the roof marker.
+## Dashboard and integration configuration
 
-## Current release
+The integration stores panel mappings, roof positions and presentation settings through Home Assistant. Configuration includes per-panel and per-string overrides, rotation, marker values, gradient colors, mobile behavior and localized labels.
 
-**v2.23.33**
+The integration creates a Tigo Solar sidebar panel and can create a Lovelace dashboard and reusable widget cards. Some features require administrator access.
 
-Recent improvements include:
+## Updates
 
-- Edit mode now replaces Edit with Save and Cancel at the top; no bottom Save button
-- Cancel restores the unsaved panel layout and settings snapshot
+Releases are published on the [GitHub Releases page](https://github.com/EvgenyKrinets/tigo-solar-dashboard/releases). Update from HACS, and restart Home Assistant when requested.
 
-- one Save changes button only; save clicks are handled consistently across dynamic re-renders
+If a frontend change appears stale, restart the Home Assistant mobile application or reload the browser. Report repeated update/cache problems in [Issues](https://github.com/EvgenyKrinets/tigo-solar-dashboard/issues).
 
-- readable 14px statistics labels for Minimum, Maximum and Average, with stronger selector specificity
+## Limitations and notes
 
-- additional Save button at the top of edit mode, with clear Saving feedback and elevated click target
+- This is an **independent community project**, not an official Tigo Energy or Home Assistant integration.
+- Discovery, available metrics and historical data depend on the Tigo entity source already installed.
+- CSV and PNG exports describe the loaded, displayed data; long-range points may be downsampled.
+- Roof layouts are visual representations, not electrical wiring diagrams.
 
-- drag all panels in a selected free-form group together in Move group mode, preserving their relative positions and spacing
+## Support and development
 
-- custom-group spacing now lays out adjacent panels with equal edge-to-edge gaps instead of scaling their original offsets
+- [Report a bug or request a feature](https://github.com/EvgenyKrinets/tigo-solar-dashboard/issues)
+- [Download a release](https://github.com/EvgenyKrinets/tigo-solar-dashboard/releases)
+- [Source code](https://github.com/EvgenyKrinets/tigo-solar-dashboard)
 
-- adjust spacing between the selected custom group of roof panels with a live slider
-- larger, readable section headings in editor settings
-
-- drag a rectangle on the roof to select a custom group of panels, no individual checkboxes needed
-
-- panel display settings now appear above statistics metric settings for immediate visual editing
-- selected panels and strings are outlined in yellow on the roof while editing, including free-form groups
-
-- larger, consistent typography for trend controls, panel readings and compact overview labels
-
-- corrected stretched chart axis labels by preserving SVG aspect ratio and matching viewBox to chart width
-
-- trend axis now uses the dashboard font and a fixed -10 lower bound
-- trend hover reports No data instead of borrowing the nearest distant reading
-- visual keyboard Tab navigation follows the on-screen control order
-- CSV export rounds values to one decimal place
-- group/global size changes now override stale per-panel manual size overrides correctly
-- edit mode supports panel rotation, including a drag rotation handle
-- free-form panel groups can be selected independently of strings for shared size, rotation and layout changes
-
-- compare multiple Tigo panels on the same trend graph
-- panel selector is grouped by string and keeps at least one panel selected
-- multi-panel comparison uses a distinct color per panel and line styles per metric
-- export the currently loaded trend as CSV data or PNG chart
-
-- restored click-to-open Home Assistant graphs on every numeric metric tile in the selected-panel card
-- Power, voltages, currents, temperature, energy and RSSI are clickable again
-- optimizer serial remains informational only
-
-- fixed the managed Home Assistant dashboard configuration error from v2.23.17
-- added a dedicated full-dashboard custom card so stale cached card definitions cannot reject the generated configuration
-- automatically migrates the v2.23.17 generated dashboard to the corrected card
-
-- automatically creates a Home Assistant Lovelace dashboard entry named Tigo Solar
-- the managed dashboard appears in Settings → Dashboards while the existing Tigo Solar sidebar panel remains unchanged
-- the generated dashboard uses the same full Tigo Solar interface through the custom card resource
-
-- click the date/range between the navigation arrows to open a native date picker
-- Day, Week and Year accept a directly selected calendar date; Month uses a month picker
-- Custom keeps explicit From/To calendars with future dates blocked
-
-- selectable panel trend periods: Day, Week, Month, Year, Lifetime and Custom
-- previous/next period navigation with the active date range shown above the chart
-- custom From/To date selection
-- automatic downsampling for longer periods to keep charts responsive
-
-- compact desktop overview: Total Power, Panel Online, All Strings and each string share one row
-- removed redundant Panels and Strings KPI tiles
-- mouse wheel now scrolls the Home Assistant page normally while hovering over the roof map
-
-- fixed the Home Assistant startup failure caused by the VERSION import introduced in v2.23.10
-- panel registration no longer depends on a separate VERSION constant
-
-- repaired the frontend loading regression introduced in v2.23.10
-- added compatibility panel tags so HACS can replace files safely before Home Assistant restarts
-- kept the interactive multi-series 24-hour panel trend from v2.23.11
-
-- added an interactive 24-hour multi-series trend to each selected panel
-- toggle Power, Voltage, Current, Temperature, Energy and RSSI directly from the legend below the chart
-- multiple sensor curves can be displayed at the same time with hover/touch value inspection
-
-- automatic frontend cache-busting: future updates no longer require Ctrl+F5
-- Lovelace resource URL is automatically updated to the installed release
-
-- select multiple numeric sensors on a panel and open them together in Home Assistant History
-
-- fixed selected-panel metric clicks opening Home Assistant history
-
-- every selected-panel metric tile now opens its native Home Assistant entity history/details
-- removed the built-in 24-hour power chart from the selected-panel card
-
-- fixed statistics click handlers being lost during live sensor refreshes
-
-- native Home Assistant history/details opening from statistic tiles
-- improved desktop roof-image sizing
-- mobile-only roof zoom controls
-- mobile pinch zoom and panning
-- configurable statistics and metric coloring
-- Home Assistant / HACS branding assets
-- automated versioned GitHub Releases for HACS updates
-
-## Project links
-
-- **Releases:** https://github.com/EvgenyKrinets/tigo-solar-dashboard/releases
-- **Issues:** https://github.com/EvgenyKrinets/tigo-solar-dashboard/issues
-- **Repository:** https://github.com/EvgenyKrinets/tigo-solar-dashboard
+Contributions and reproducible issue reports are welcome. Please include your Home Assistant version, dashboard release version, relevant logs and clear steps to reproduce a problem. Do not post credentials or private gateway data.
 
 ---
 
-<p align="center">
-  Built for clear, fast per-module solar monitoring inside Home Assistant.
-</p>
+Made for clear, practical module-level solar monitoring in Home Assistant.

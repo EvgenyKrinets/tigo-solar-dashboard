@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/EvgenyKrinets/tigo-solar-dashboard/main/custom_components/tigo_solar_dashboard/brand/logo.png" width="120" alt="Tigo Solar Dashboard logo">
-</p>
+![Tigo Solar Dashboard logo](https://raw.githubusercontent.com/EvgenyKrinets/tigo-solar-dashboard/main/custom_components/tigo_solar_dashboard/brand/logo.png)
 
 <h1 align="center">Tigo Solar Dashboard for Home Assistant</h1>
 

@@ -1,4 +1,4 @@
-![Tigo Solar Dashboard logo](https://raw.githubusercontent.com/EvgenyKrinets/tigo-solar-dashboard/main/custom_components/tigo_solar_dashboard/brand/logo.png)
+<p align="center"><strong>☀️ Tigo Solar Dashboard</strong></p>
 
 <h1 align="center">Tigo Solar Dashboard for Home Assistant</h1>
 

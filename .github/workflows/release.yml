@@ -1,10 +1,11 @@
 name: Release HACS version
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - Validate HACS integration
+    types: [completed]
     branches: [main]
-    paths:
-      - custom_components/tigo_solar_dashboard/manifest.json
   workflow_dispatch:
 
 permissions:
@@ -12,9 +13,12 @@ permissions:
 
 jobs:
   release:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Read integration version
         id: version
         shell: bash
@@ -25,11 +29,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         shell: bash
         run: |
           TAG="v$VERSION"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "$TAG already exists"
           else
-            gh release create "$TAG" --target "${GITHUB_SHA}" --title "Tigo Solar Dashboard $TAG" --generate-notes
+            gh release create "$TAG" --target "$TARGET_SHA" --title "Tigo Solar Dashboard $TAG" --generate-notes
           fi

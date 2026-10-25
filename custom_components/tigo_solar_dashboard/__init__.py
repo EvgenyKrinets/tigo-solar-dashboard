@@ -1,6 +1,7 @@
 """Tigo dashboard: uses existing Tigo sensors; does not control inverter/optimizers."""
 from pathlib import Path
 import inspect
+import logging
 from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
@@ -8,6 +9,8 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, STORAGE_VERSION
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 from . import api
@@ -25,13 +28,16 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
     await hass.http.async_register_static_paths([
         StaticPathConfig("/tigo_solar_dashboard/tigo-dashboard.js", str(js_path), False)
     ])
-    await api.migrate_roof(hass)
+    try:
+        await api.migrate_roof(hass)
+    except OSError:
+        _LOGGER.exception("Could not migrate legacy roof image; dashboard will still load")
     api.register(hass)
     panel_result = panel_custom.async_register_panel(
         hass,
-        webcomponent_name="tigo-solar-panel-v2-23-45",
+        webcomponent_name="tigo-solar-panel",
         frontend_url_path="tigo-solar",
-        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.45",
+        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.46",
         sidebar_title="Tigo Solar",
         sidebar_icon="mdi:solar-panel-large",
         require_admin=False,

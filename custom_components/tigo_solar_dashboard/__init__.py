@@ -25,12 +25,13 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
     await hass.http.async_register_static_paths([
         StaticPathConfig("/tigo_solar_dashboard/tigo-dashboard.js", str(js_path), False)
     ])
+    await api.migrate_roof(hass)
     api.register(hass)
     panel_result = panel_custom.async_register_panel(
         hass,
-        webcomponent_name="tigo-solar-panel-v2-23-43",
+        webcomponent_name="tigo-solar-panel-v2-23-44",
         frontend_url_path="tigo-solar",
-        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.43",
+        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.44",
         sidebar_title="Tigo Solar",
         sidebar_icon="mdi:solar-panel-large",
         require_admin=False,

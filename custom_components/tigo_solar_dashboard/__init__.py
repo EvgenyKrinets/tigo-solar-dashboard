@@ -33,11 +33,12 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
     except OSError:
         _LOGGER.exception("Could not migrate legacy roof image; dashboard will still load")
     api.register(hass)
+    hass.http.register_view(api.RoofImageView(hass))
     panel_result = panel_custom.async_register_panel(
         hass,
         webcomponent_name="tigo-solar-panel",
         frontend_url_path="tigo-solar",
-        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.46",
+        module_url="/tigo_solar_dashboard/tigo-dashboard.js?v=2.23.47",
         sidebar_title="Tigo Solar",
         sidebar_icon="mdi:solar-panel-large",
         require_admin=False,

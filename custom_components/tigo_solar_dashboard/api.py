@@ -5,8 +5,10 @@ import re
 import uuid
 import os
 from pathlib import Path
+from aiohttp import web
 import voluptuous as vol
 from homeassistant.components import websocket_api
+from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 
@@ -29,7 +31,6 @@ def register(hass: HomeAssistant):
     websocket_api.async_register_command(hass, scan)
     websocket_api.async_register_command(hass, save)
     websocket_api.async_register_command(hass, upload_roof)
-    websocket_api.async_register_command(hass, get_roof)
 
 @websocket_api.websocket_command({vol.Required("type"): "tigo_dashboard/get"})
 @websocket_api.async_response
@@ -187,7 +188,7 @@ def _private_roof_folder(hass):
     return Path(hass.config.path(".storage", "tigo_solar_dashboard_roofs"))
 
 def _private_roof_name(value):
-    match = re.fullmatch(r"roof_([0-9a-f]{32})\\.(jpg|png|webp)", value or "")
+    match = re.fullmatch(r"roof_([0-9a-f]{32})\.(jpg|png|webp)", value or "")
     return match.group(0) if match else None
 
 def _load_private_roof(hass, name):
@@ -197,6 +198,37 @@ def _load_private_roof(hass, name):
         return path.read_bytes()
     except FileNotFoundError:
         return None
+
+class RoofImageView(HomeAssistantView):
+    """Serve the active roof image only to authenticated Home Assistant users."""
+
+    url = "/api/tigo_solar_dashboard/roof/{filename}"
+    name = "api:tigo_solar_dashboard:roof"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request: web.Request, filename: str) -> web.Response:
+        if DOMAIN not in self.hass.data:
+            raise web.HTTPNotFound()
+        current = self.hass.data[DOMAIN]["data"].get("roof", "")
+        safe_filename = _private_roof_name(filename)
+        if safe_filename is None or _private_roof_name(current) != safe_filename:
+            raise web.HTTPNotFound()
+        blob = await self.hass.async_add_executor_job(
+            _load_private_roof, self.hass, safe_filename
+        )
+        if blob is None:
+            raise web.HTTPNotFound()
+        extension = safe_filename.rsplit(".", 1)[-1]
+        mime = {"jpg": "jpeg", "png": "png", "webp": "webp"}[extension]
+        return web.Response(
+            body=blob,
+            content_type=f"image/{mime}",
+            headers={"Cache-Control": "private, no-store"},
+        )
+
 
 def _migrate_legacy_roof(hass, name):
     """Move a legacy publicly exposed roof photo to private storage."""
@@ -215,23 +247,6 @@ def _migrate_legacy_roof(hass, name):
         return True
     except FileNotFoundError:
         return target.exists()
-
-@websocket_api.websocket_command({vol.Required("type"): "tigo_dashboard/get_roof"})
-@websocket_api.async_response
-async def get_roof(hass, connection, msg):
-    """Return the configured roof only over an authenticated websocket."""
-    roof = hass.data[DOMAIN]["data"].get("roof", "")
-    filename = _private_roof_name(roof)
-    if not filename:
-        connection.send_result(msg["id"], {"image": ""})
-        return
-    blob = await hass.async_add_executor_job(_load_private_roof, hass, filename)
-    if blob is None:
-        connection.send_error(msg["id"], "not_found", "Roof image not found")
-        return
-    ext = filename.rsplit(".", 1)[-1]
-    mime = {"jpg": "jpeg", "png": "png", "webp": "webp"}[ext]
-    connection.send_result(msg["id"], {"image": f"data:image/{mime};base64," + base64.b64encode(blob).decode("ascii")})
 
 async def migrate_roof(hass):
     """Migrate old public images on startup before the dashboard is served."""
@@ -276,6 +291,12 @@ async def upload_roof(hass, connection, msg):
     old = data.get("roof", "")
     data["roof"] = filename
     await hass.data[DOMAIN]["store"].async_save(data)
-    if _private_roof_name(old) and old != filename:
-        await hass.async_add_executor_job((folder / old).unlink, True)
+    old_private_name = _private_roof_name(old)
+    if old_private_name and old_private_name != filename:
+        await hass.async_add_executor_job((folder / old_private_name).unlink, True)
+    elif isinstance(old, str) and old.startswith("/local/tigo_solar_dashboard/"):
+        old_public_name = _private_roof_name(old[len("/local/tigo_solar_dashboard/"):])
+        if old_public_name:
+            old_public_path = Path(hass.config.path("www", "tigo_solar_dashboard")) / old_public_name
+            await hass.async_add_executor_job(old_public_path.unlink, True)
     connection.send_result(msg["id"], {"roof": data["roof"]})
